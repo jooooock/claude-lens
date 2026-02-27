@@ -21,12 +21,10 @@ export async function* streamJsonlRecords(filePath: string): AsyncGenerator<Reco
 }
 
 /**
- * 分页读取 JSONL 文件，支持按类型过滤
+ * 读取 JSONL 文件全部记录，支持按类型过滤
  */
-export async function readJsonlPaginated(
+export async function readJsonlAll(
   filePath: string,
-  offset: number,
-  limit: number,
   excludeTypes?: Set<string>
 ): Promise<{ records: Record<string, unknown>[], total: number }> {
   const rl = createInterface({
@@ -35,8 +33,6 @@ export async function readJsonlPaginated(
   })
 
   const records: Record<string, unknown>[] = []
-  let filteredIndex = 0
-  let totalFiltered = 0
 
   for await (const line of rl) {
     if (!line.trim()) continue
@@ -53,20 +49,14 @@ export async function readJsonlPaginated(
       if (skip) continue
     }
 
-    totalFiltered++
-
-    if (filteredIndex >= offset && records.length < limit) {
-      try {
-        records.push(JSON.parse(line))
-      } catch {
-        // 跳过格式错误的行
-      }
+    try {
+      records.push(JSON.parse(line))
+    } catch {
+      // 跳过格式错误的行
     }
-
-    filteredIndex++
   }
 
-  return { records, total: totalFiltered }
+  return { records, total: records.length }
 }
 
 /**

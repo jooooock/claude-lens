@@ -1,60 +1,71 @@
-# Nuxt Starter Template
+# Claude Lens
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Claude Lens 是一个 Web UI 工具，用于浏览和分析 [Claude Code](https://claude.ai/code) 的对话历史记录。
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+它读取 `~/.claude/projects/` 目录下的 JSONL 文件，将原始记录解析为结构化的对话视图，帮助你回顾和检索与 Claude Code 的交互过程。
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## 功能特性
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+- **项目树导航** — 侧边栏展示所有项目及会话列表，支持折叠展开，显示文件大小和最后活跃时间
+- **对话视图** — 将 JSONL 记录重建为用户-助手的对话 turn，配对工具调用与返回结果
+- **工具调用展示** — 可折叠的工具调用卡片，展示工具名称、输入参数（语法高亮）和执行结果
+- **Thinking 块** — 展示 Claude 的推理思考过程
+- **Minimap 导航** — 右侧缩略地图，用色块标识消息角色，支持点击跳转和拖拽定位
+- **内容过滤** — 可开关 Thinking / Progress / System Events / Sidechain 的显示
+- **大文件支持** — 流式解析 + 分页加载，支持 16MB+ 的 JSONL 文件
+- **Markdown 渲染** — 消息内容自动识别并渲染 Markdown，支持代码高亮
+- **图片预览** — 内联图片支持全屏预览
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+## 技术栈
 
-## Quick Start
+- [Nuxt 4](https://nuxt.com/) + TypeScript
+- [Nuxt UI v4](https://ui.nuxt.com/)
+- [TailwindCSS v4](https://tailwindcss.com/)
+- [date-fns](https://date-fns.org/)、[marked](https://marked.js.org/)、[highlight.js](https://highlightjs.org/)
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/starter
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+## 快速开始
 
 ```bash
-pnpm install
+# 安装依赖
+yarn install
+
+# 启动开发服务器
+yarn dev
 ```
 
-## Development Server
+打开 http://localhost:3000 即可使用。
 
-Start the development server on `http://localhost:3000`:
+## 常用命令
 
 ```bash
-pnpm dev
+yarn dev          # 启动开发服务器
+yarn build        # 构建生产版本
+yarn preview      # 预览生产构建
+yarn lint         # ESLint 代码检查
+yarn typecheck    # TypeScript 类型检查
 ```
 
-## Production
+## 项目结构
 
-Build the application for production:
+```
+app/
+├── types/              # TypeScript 类型定义（JSONL 记录类型、API 类型）
+├── composables/        # Vue Composables（项目列表、会话加载、对话树构建）
+├── components/
+│   ├── sidebar/        # 侧边栏项目树
+│   └── conversation/   # 对话展示组件（消息气泡、工具调用、Minimap 等）
+├── layouts/            # Dashboard 布局
+└── pages/              # 路由页面
 
-```bash
-pnpm build
+server/
+├── api/                # API 路由（项目列表、会话记录分页查询）
+└── utils/              # 流式 JSONL 解析器、项目目录扫描
 ```
 
-Locally preview production build:
+## 数据源
 
-```bash
-pnpm preview
-```
+Claude Lens 读取 `~/.claude/projects/` 目录。该目录由 Claude Code CLI 自动生成，包含每次交互的 JSONL 格式对话记录。
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## License
+
+MIT

@@ -4,11 +4,6 @@ import type { ConversationTurn } from '~/types/api'
 defineProps<{
   turns: ConversationTurn[]
   loading: boolean
-  hasMore: boolean
-}>()
-
-defineEmits<{
-  loadMore: []
 }>()
 </script>
 
@@ -92,7 +87,7 @@ defineEmits<{
       </div>
     </div>
 
-    <!-- 加载更多 -->
+    <!-- 加载中 -->
     <div
       v-if="loading"
       class="flex justify-center py-4"
@@ -100,19 +95,6 @@ defineEmits<{
       <UIcon
         name="i-lucide-loader-2"
         class="size-5 animate-spin text-muted"
-      />
-    </div>
-
-    <div
-      v-if="hasMore && !loading"
-      class="flex justify-center py-2"
-    >
-      <UButton
-        label="加载更多"
-        variant="ghost"
-        color="neutral"
-        size="sm"
-        @click="$emit('loadMore')"
       />
     </div>
   </div>

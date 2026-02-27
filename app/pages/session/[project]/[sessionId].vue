@@ -5,7 +5,7 @@ const route = useRoute()
 const project = computed(() => route.params.project as string)
 const sessionId = computed(() => route.params.sessionId as string)
 
-const { records, loading, hasMore, loadMore } = useSession(project, sessionId)
+const { records, loading } = useSession(project, sessionId)
 
 const filters = ref<ConversationFilters>({
   showProgress: false,
@@ -18,20 +18,8 @@ const { turns } = useConversationTree(records, filters)
 
 const showFilters = ref(false)
 
-// 滚动容器 ref，供 minimap 和加载更多共用
+// 滚动容器 ref，供 minimap 共用
 const scrollEl = ref<HTMLElement>()
-
-// 滚动到底部时加载更多
-function onScroll() {
-  const el = scrollEl.value
-  if (!el) return
-  if (loading.value || !hasMore.value) return
-
-  const threshold = 200
-  if (el.scrollHeight - el.scrollTop - el.clientHeight < threshold) {
-    loadMore()
-  }
-}
 </script>
 
 <template>
@@ -97,13 +85,10 @@ function onScroll() {
       <div
         ref="scrollEl"
         class="flex-1 overflow-y-auto"
-        @scroll="onScroll"
       >
         <ConversationView
           :turns="turns"
           :loading="loading"
-          :has-more="hasMore"
-          @load-more="loadMore"
         />
       </div>
 

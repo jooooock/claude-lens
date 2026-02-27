@@ -5,10 +5,7 @@ export default defineEventHandler(async (event) => {
   const sessionId = getRouterParam(event, 'sessionId')!
   const query = getQuery(event)
 
-  const offset = Number(query.offset) || 0
-  const limit = Number(query.limit) || 200
   const excludeTypesParam = (query.excludeTypes as string) || 'progress,file-history-snapshot,queue-operation'
-
   const excludeTypes = new Set(excludeTypesParam.split(',').filter(Boolean))
 
   // 路径安全校验：确保最终路径在 CLAUDE_PROJECTS_DIR 内
@@ -21,14 +18,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const { records, total } = await readJsonlPaginated(filePath, offset, limit, excludeTypes)
+    const { records, total } = await readJsonlAll(filePath, excludeTypes)
 
     return {
       records,
-      total,
-      offset,
-      limit,
-      hasMore: offset + records.length < total
+      total
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'

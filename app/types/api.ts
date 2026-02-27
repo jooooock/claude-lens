@@ -2,12 +2,9 @@ import type { JsonlRecord } from './records'
 
 export type { ProjectInfo, SessionInfo } from '~~/shared/types/project'
 
-export interface PaginatedRecordsResponse {
+export interface SessionRecordsResponse {
   records: JsonlRecord[]
   total: number
-  offset: number
-  limit: number
-  hasMore: boolean
 }
 
 // UI 用的对话组织类型
