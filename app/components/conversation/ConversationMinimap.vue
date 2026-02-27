@@ -149,19 +149,19 @@ const fisheyeLayout = computed(() => {
   const centers: number[] = []
   let y = PADDING
   for (let i = 0; i < count; i++) {
-    centers[i] = y + base.blockHeights[i] / 2
-    y += base.blockHeights[i] + gap
+    centers[i] = y + base.blockHeights[i]! / 2
+    y += base.blockHeights[i]! + gap
   }
 
   // 高斯放大：鼠标附近的 block 获得更大的权重
   const focusFactors: number[] = []
   for (let i = 0; i < count; i++) {
-    const dist = centers[i] - hoverY.value
+    const dist = centers[i]! - hoverY.value
     focusFactors[i] = 1 + MAGNIFICATION * Math.exp(-(dist * dist) / twoSigmaSq)
   }
 
   // 用 focusFactor 调整权重，然后按比例分配总空间
-  const effectiveWeights = blocks.value.map((b, i) => b.weight * focusFactors[i])
+  const effectiveWeights = blocks.value.map((b, i) => b.weight * focusFactors[i]!)
   const totalEffective = effectiveWeights.reduce((s, w) => s + w, 0)
 
   const availableHeight = containerHeight.value - PADDING * 2
@@ -324,7 +324,7 @@ onMounted(() => {
   if (containerEl.value) {
     containerHeight.value = containerEl.value.clientHeight
     resizeObserver = new ResizeObserver((entries) => {
-      containerHeight.value = entries[0].contentRect.height
+      containerHeight.value = entries[0]!.contentRect.height
     })
     resizeObserver.observe(containerEl.value)
   }
