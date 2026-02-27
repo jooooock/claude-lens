@@ -1,0 +1,362 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+
+  /* imsyy 自定义主色 #425aef 色阶 */
+  --color-imsyy-50: #eef1fe;
+  --color-imsyy-100: #dfe4fd;
+  --color-imsyy-200: #c5ccfb;
+  --color-imsyy-300: #a1aaf8;
+  --color-imsyy-400: #7b85f4;
+  --color-imsyy-500: #425aef;
+  --color-imsyy-600: #3a4ee4;
+  --color-imsyy-700: #3040c9;
+  --color-imsyy-800: #2a37a3;
+  --color-imsyy-900: #273381;
+  --color-imsyy-950: #191f4d;
+}
+
+/* ===== 浅色模式变量 ===== */
+:root {
+  --site-bg: #ffffff;
+  --card-bg: #fff;
+  --card-border: #e3e8f7;
+  --card-shadow: 0 8px 16px -4px #2c2d300c;
+  --card-radius: 8px;
+  --text-primary: #363636;
+  --text-secondary: #3c3c43cc;
+
+  --primary-color: #425aef;
+  --primary-bg: #4259ef0d;
+  --secondary-bg: #f7f7f9;
+  --text-grey: #999;
+  --card-hover-shadow: 0 8px 16px -4px #4259ef0d;
+  --code-radius: 12px;
+
+  --scrollbar-color: rgba(60, 60, 67, 0.4);
+  --scrollbar-hover-color: rgba(60, 60, 67, 0.6);
+
+  /* 语义化角色颜色 */
+  --color-user: #425aef;
+  --color-user-bg: #425aef06;
+  --color-user-bg-hover: #425aef12;
+  --color-assistant: #10b981;
+  --color-assistant-bg: #10b98106;
+  --color-assistant-bg-hover: #10b98112;
+  --color-tool: #6b7280;
+  --color-tool-bg: #6b728006;
+  --color-tool-bg-hover: #6b728012;
+  --color-thinking: #9ca3af;
+  --color-thinking-bg: #9ca3af06;
+  --color-thinking-bg-hover: #9ca3af12;
+  --color-warning: #f59e0b;
+  --color-warning-text: #b45309;
+  --color-warning-bg: #f59e0b12;
+  --color-warning-border: #f59e0b40;
+
+  /* 侧边栏颜色 */
+  --sidebar-text: #1f2328;
+  --sidebar-text-muted: #636c76;
+  --sidebar-icon-muted: #848d97;
+  --sidebar-icon-active: #54aeff;
+  --sidebar-hover-bg: #f6f8fa;
+  --sidebar-active-bg: #ddf4ff;
+  --sidebar-active-text: #0969da;
+  --sidebar-border: #d1d9e0;
+  --sidebar-badge-bg: #eff1f3;
+  --sidebar-meta-text: #8b949e;
+}
+
+/* ===== 暗色模式变量 ===== */
+.dark {
+  --site-bg: #0d1117;
+  --card-bg: #161b22;
+  --card-border: #30363d;
+  --card-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3);
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+
+  --primary-color: #7b85f4;
+  --primary-bg: #7b85f40d;
+  --secondary-bg: #1c2128;
+  --text-grey: #6e7681;
+  --card-hover-shadow: 0 8px 16px -4px rgba(123, 133, 244, 0.08);
+
+  --scrollbar-color: rgba(139, 148, 158, 0.4);
+  --scrollbar-hover-color: rgba(139, 148, 158, 0.6);
+
+  /* 语义化角色颜色（暗色） */
+  --color-user: #7b85f4;
+  --color-user-bg: #7b85f40a;
+  --color-user-bg-hover: #7b85f418;
+  --color-assistant: #34d399;
+  --color-assistant-bg: #34d3990a;
+  --color-assistant-bg-hover: #34d39918;
+  --color-tool: #9ca3af;
+  --color-tool-bg: #9ca3af0a;
+  --color-tool-bg-hover: #9ca3af18;
+  --color-thinking: #6b7280;
+  --color-thinking-bg: #6b72800a;
+  --color-thinking-bg-hover: #6b728018;
+  --color-warning: #fbbf24;
+  --color-warning-text: #fbbf24;
+  --color-warning-bg: #fbbf2412;
+  --color-warning-border: #fbbf2440;
+
+  /* 侧边栏颜色（暗色） */
+  --sidebar-text: #e6edf3;
+  --sidebar-text-muted: #8b949e;
+  --sidebar-icon-muted: #6e7681;
+  --sidebar-icon-active: #58a6ff;
+  --sidebar-hover-bg: #1c2128;
+  --sidebar-active-bg: #1a2332;
+  --sidebar-active-text: #58a6ff;
+  --sidebar-border: #30363d;
+  --sidebar-badge-bg: #21262d;
+  --sidebar-meta-text: #6e7681;
+}
+
+body {
+  background-color: var(--site-bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* 全局选中样式 */
+::selection {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-color);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-hover-color);
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 通用卡片样式 */
+.card-style {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s;
+}
+
+.card-style:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--card-hover-shadow);
+}
+
+/* 卡片类型区分 — 用户消息 */
+.card-user {
+  border: 1.5px solid var(--color-user);
+  background-color: var(--color-user-bg);
+}
+.card-user:hover {
+  border-color: var(--color-user);
+}
+
+/* 卡片类型区分 — Assistant 消息 */
+.card-assistant {
+  border: 1.5px solid var(--color-assistant);
+  background-color: var(--color-assistant-bg);
+}
+.card-assistant:hover {
+  border-color: var(--color-assistant);
+}
+
+/* 卡片类型区分 — 工具调用 */
+.card-tool {
+  border: 1.5px solid var(--color-tool);
+  background-color: var(--color-tool-bg);
+}
+.card-tool:hover {
+  border-color: var(--color-tool);
+}
+
+/* 卡片类型区分 — Thinking */
+.card-thinking {
+  border: 1.5px dashed var(--color-thinking);
+  background-color: var(--color-thinking-bg);
+}
+.card-thinking:hover {
+  border-color: var(--color-thinking);
+}
+
+/* 代码块样式 */
+.code-block {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--code-radius);
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-family: "Fira Code", "JetBrains Mono", "Cascadia Code", Menlo, Monaco, Consolas, "Courier New", monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 正文内容排版 — 保留向后兼容 */
+.content-text {
+  font-size: 1rem;
+  line-height: 2;
+  letter-spacing: 0.6px;
+}
+
+/* 卡片 body 文本 — 统一中英文字体大小 */
+.body-text {
+  font-size: 0.875rem;
+  line-height: 1.8;
+  letter-spacing: 0.3px;
+}
+
+/* Markdown 渲染样式 */
+.markdown-body {
+  font-size: 0.875rem;
+  line-height: 1.8;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  line-height: 1.4;
+}
+.markdown-body h1 { font-size: 1.25rem; }
+.markdown-body h2 { font-size: 1.125rem; }
+.markdown-body h3 { font-size: 1rem; }
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 { font-size: 0.875rem; }
+
+.markdown-body p {
+  margin-bottom: 0.75em;
+}
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+.markdown-body ul { list-style-type: disc; }
+.markdown-body ol { list-style-type: decimal; }
+.markdown-body li {
+  margin-bottom: 0.25em;
+}
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin-bottom: 0;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--primary-color);
+  padding: 0.5em 1em;
+  margin: 0.75em 0;
+  background-color: var(--secondary-bg);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+}
+
+.markdown-body a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body strong {
+  font-weight: 600;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--card-border);
+  margin: 1em 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.8rem;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--card-border);
+  padding: 0.4em 0.8em;
+  text-align: left;
+}
+.markdown-body th {
+  background-color: var(--secondary-bg);
+  font-weight: 600;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.markdown-body img:hover {
+  opacity: 0.8;
+}
+
+/* 内联代码 */
+.inline-code {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  font-size: 0.8rem;
+  font-family: "Fira Code", "JetBrains Mono", "Cascadia Code", Menlo, Monaco, Consolas, "Courier New", monospace;
+  color: var(--primary-color);
+}
+
+/* highlight.js 语法高亮主题 */
+.hljs {
+  background-color: var(--secondary-bg) !important;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in { color: #8b5cf6; }
+.hljs-string,
+.hljs-attr { color: #10b981; }
+.hljs-number,
+.hljs-literal { color: #f59e0b; }
+.hljs-comment { color: var(--text-grey); font-style: italic; }
+.hljs-punctuation { color: var(--color-tool); }
+.hljs-property,
+.hljs-attribute { color: var(--primary-color); }
+.hljs-title,
+.hljs-function { color: #ec4899; }
+.hljs-type,
+.hljs-class { color: #06b6d4; }
+.hljs-meta { color: #8b5cf6; }
+.hljs-addition { color: #10b981; background-color: #10b98110; }
+.hljs-deletion { color: #ef4444; background-color: #ef444410; }
