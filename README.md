@@ -4,6 +4,20 @@ Claude Lens 是一个 Web UI 工具，用于浏览和分析 [Claude Code](https:
 
 它读取 `~/.claude/projects/` 目录下的 JSONL 文件，将原始记录解析为结构化的对话视图，帮助你回顾和检索与 Claude Code 的交互过程。
 
+## 截图预览
+
+### 亮色模式
+
+![亮色模式概览](public/screenshots/overview-light.png)
+
+### 工具调用展开
+
+![工具调用展开详情](public/screenshots/tool-expanded.png)
+
+### 深色模式
+
+![深色模式概览](public/screenshots/overview-dark.png)
+
 ## 功能特性
 
 ### 项目树导航
