@@ -184,10 +184,23 @@ export interface GlobToolResult {
   truncated: boolean
 }
 
-/** TodoWrite 工具的执行结果：待办事项更新 */
+/**
+ * 待办事项条目。
+ * TodoWrite 工具用于管理会话中的任务清单，每个 todo 项包含内容和状态。
+ */
+export interface TodoItem {
+  /** 任务描述内容 */
+  content: string
+  /** 任务状态：pending(待处理) / in_progress(进行中) / completed(已完成) */
+  status: 'pending' | 'in_progress' | 'completed'
+  /** 任务正在执行时的描述形式（如 "正在运行测试"） */
+  activeForm?: string
+}
+
+/** TodoWrite 工具的执行结果：待办事项更新（包含更新前后的完整列表） */
 export interface TodoWriteToolResult {
-  newTodos: unknown[]
-  oldTodos: unknown[]
+  newTodos: TodoItem[]
+  oldTodos: TodoItem[]
 }
 
 /**
@@ -614,6 +627,11 @@ export function isWriteResult(r: ToolUseResult): r is WriteToolResult {
 /** 判断是否为 Task 工具结果（特征：包含 agentId 和 totalDurationMs） */
 export function isTaskResult(r: ToolUseResult): r is TaskToolResult {
   return typeof r === 'object' && r !== null && !Array.isArray(r) && 'agentId' in r && 'totalDurationMs' in r
+}
+
+/** 判断是否为 TodoWrite 工具结果（特征：包含 newTodos 数组） */
+export function isTodoWriteResult(r: ToolUseResult): r is TodoWriteToolResult {
+  return typeof r === 'object' && r !== null && !Array.isArray(r) && 'newTodos' in r
 }
 
 // =====================================================================

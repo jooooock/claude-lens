@@ -7,7 +7,9 @@
     - 展开后：输入参数（JSON 语法高亮）、执行结果（支持 JSON 和纯文本两种渲染）
     - 特殊标志：Bash 工具的错误/中断状态 badge
     - Edit/Write 工具的 structuredPatch 差异预览
-    - Task（子代理）工具的元数据（agentId、耗时、Token 用量、工具调用次数）
+    - Task（子代理）工具的元数据（agentId、耗时、Token 用量、工具调用次数）+ 查看对话按钮
+    - TodoWrite 工具的任务清单渲染
+    - 外部化工具结果的按需加载
     结果超过 3000 字符自动截断，可点击展开完整内容。
 
   Props：
@@ -18,8 +20,8 @@
     在 ConversationView.vue 中，当 assistantBlock.kind === 'tool_call' 时渲染此组件。
 -->
 <script setup lang="ts">
-import type { ToolUseContent, UserRecord, TaskToolResult } from '~/types/records'
-import { isBashResult, isReadResult, isGrepResult, isGlobResult, isMcpResult, isEditResult, isWriteResult, isTaskResult } from '~/types/records'
+import type { ToolUseContent, UserRecord, TaskToolResult, TodoItem } from '~/types/records'
+import { isBashResult, isReadResult, isGrepResult, isGlobResult, isMcpResult, isEditResult, isWriteResult, isTaskResult, isTodoWriteResult } from '~/types/records'
 
 const props = defineProps<{
   call: ToolUseContent
@@ -27,6 +29,15 @@ const props = defineProps<{
 }>()
 
 const expanded = ref(false)
+
+/**
+ * 通过 inject 获取会话上下文（project 和 sessionId），
+ * 用于调用子代理/工具结果 API。由 session page 通过 provide 注入。
+ */
+const sessionContext = inject<{
+  project: Ref<string>
+  sessionId: Ref<string>
+}>('sessionContext', null as any)
 
 /** 工具名称到 Lucide 图标名的映射表，未匹配的工具使用默认的扳手图标 */
 const toolIcons: Record<string, string> = {
@@ -121,6 +132,11 @@ const resultText = computed(() => {
     return r.filenames.join('\n')
   }
 
+  // TodoWrite 结果由专门的 todo 渲染区域处理
+  if (isTodoWriteResult(r)) {
+    return ''
+  }
+
   return JSON.stringify(r, null, 2)
 })
 
@@ -168,6 +184,88 @@ const structuredPatch = computed(() => {
   if (isWriteResult(r) && r.structuredPatch) return r.structuredPatch
   return ''
 })
+
+// =====================================================================
+// 子代理对话查看功能
+// =====================================================================
+
+/** 子代理抽屉是否打开 */
+const showSubagent = ref(false)
+
+/** 打开子代理对话抽屉 */
+function openSubagent() {
+  showSubagent.value = true
+}
+
+// =====================================================================
+// 外部化工具结果加载功能
+// =====================================================================
+
+/** 外部工具结果的完整内容 */
+const externalResult = ref('')
+/** 外部工具结果加载状态 */
+const loadingExternal = ref(false)
+/** 外部工具结果的文件大小 */
+const externalFileSize = ref(0)
+/** 外部工具结果是否被截断 */
+const externalTruncated = ref(false)
+/** 外部工具结果加载错误 */
+const externalError = ref('')
+
+/**
+ * 判断是否可以尝试加载外部工具结果文件。
+ * 条件：有 sessionContext、call.id 存在、且结果文本为空或被截断。
+ */
+const canLoadExternal = computed(() => {
+  if (!sessionContext || !props.call.id) return false
+  // 只要有 call.id 就可以尝试加载
+  return true
+})
+
+/** 加载外部化的工具结果文件 */
+async function loadExternalResult() {
+  if (!sessionContext || !props.call.id) return
+
+  loadingExternal.value = true
+  externalError.value = ''
+
+  try {
+    const data = await $fetch<{ content: string, fileSize: number, truncated: boolean }>(
+      `/api/sessions/${sessionContext.project.value}/${sessionContext.sessionId.value}/tool-result/${props.call.id}`
+    )
+    externalResult.value = data.content
+    externalFileSize.value = data.fileSize
+    externalTruncated.value = data.truncated
+  } catch {
+    externalError.value = '未找到外部结果文件'
+  } finally {
+    loadingExternal.value = false
+  }
+}
+
+// =====================================================================
+// TodoWrite 待办事项渲染
+// =====================================================================
+
+/** 提取 TodoWrite 的新待办事项列表 */
+const todoItems = computed<TodoItem[]>(() => {
+  if (!props.result?.toolUseResult || !isTodoWriteResult(props.result.toolUseResult)) return []
+  return props.result.toolUseResult.newTodos || []
+})
+
+/** 待办事项状态对应的图标 */
+const todoStatusIcons: Record<string, string> = {
+  completed: 'i-lucide-circle-check',
+  in_progress: 'i-lucide-loader-2',
+  pending: 'i-lucide-circle'
+}
+
+/** 待办事项状态对应的颜色类 */
+const todoStatusColors: Record<string, string> = {
+  completed: 'text-green-500',
+  in_progress: 'text-blue-500',
+  pending: 'text-[var(--text-secondary)]'
+}
 </script>
 
 <template>
@@ -220,6 +318,39 @@ const structuredPatch = computed(() => {
         </span>
       </div>
 
+      <!-- TodoWrite 待办事项清单 -->
+      <div
+        v-if="todoItems.length > 0"
+        class="px-3.5 py-3 border-t border-[var(--card-border)]"
+      >
+        <div class="text-xs text-[var(--text-secondary)] mb-2 font-medium">
+          待办事项 ({{ todoItems.length }})
+        </div>
+        <div class="space-y-1">
+          <div
+            v-for="(todo, idx) in todoItems"
+            :key="idx"
+            class="flex items-start gap-2 text-xs py-0.5"
+          >
+            <UIcon
+              :name="todoStatusIcons[todo.status] || 'i-lucide-circle'"
+              :class="['size-3.5 mt-0.5 shrink-0', todoStatusColors[todo.status] || '']"
+            />
+            <span
+              :class="[
+                todo.status === 'completed' ? 'line-through text-[var(--text-secondary)]' : '',
+                todo.status === 'in_progress' ? 'font-medium' : ''
+              ]"
+            >
+              {{ todo.content }}
+              <span v-if="todo.status === 'in_progress' && todo.activeForm" class="text-[var(--text-secondary)] ml-1">
+                ({{ todo.activeForm }})
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- 结果 -->
       <div
         v-if="resultText"
@@ -238,13 +369,82 @@ const structuredPatch = computed(() => {
           v-else
           class="code-block max-h-96 overflow-y-auto"
         >{{ showFullResult ? resultText : truncatedResult }}</pre>
+        <div class="flex items-center gap-3 mt-1.5">
+          <button
+            v-if="isResultTruncated && !showFullResult"
+            class="text-xs text-primary hover:underline"
+            @click.stop="showFullResult = true"
+          >
+            显示全部 ({{ resultText.length.toLocaleString() }} 字符)
+          </button>
+          <!-- 外部结果加载按钮 -->
+          <button
+            v-if="canLoadExternal && !externalResult && !loadingExternal"
+            class="text-xs text-primary hover:underline inline-flex items-center gap-1"
+            @click.stop="loadExternalResult"
+          >
+            <UIcon name="i-lucide-download" class="size-3" />
+            加载外部结果文件
+          </button>
+          <span
+            v-if="loadingExternal"
+            class="text-xs text-[var(--text-secondary)] inline-flex items-center gap-1"
+          >
+            <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+            加载中...
+          </span>
+          <span
+            v-if="externalError"
+            class="text-xs text-[var(--text-secondary)]"
+          >
+            {{ externalError }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 无内联结果时也显示外部结果加载入口 -->
+      <div
+        v-if="!resultText && canLoadExternal && !todoItems.length"
+        class="px-3.5 py-3 border-t border-[var(--card-border)]"
+      >
+        <div class="text-xs text-[var(--text-secondary)] mb-1.5 font-medium">
+          结果 Result
+        </div>
         <button
-          v-if="isResultTruncated && !showFullResult"
-          class="text-xs text-primary mt-1.5 hover:underline"
-          @click.stop="showFullResult = true"
+          v-if="!externalResult && !loadingExternal"
+          class="text-xs text-primary hover:underline inline-flex items-center gap-1"
+          @click.stop="loadExternalResult"
         >
-          显示全部 ({{ resultText.length.toLocaleString() }} 字符)
+          <UIcon name="i-lucide-download" class="size-3" />
+          加载外部结果文件
         </button>
+        <span
+          v-if="loadingExternal"
+          class="text-xs text-[var(--text-secondary)] inline-flex items-center gap-1"
+        >
+          <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+          加载中...
+        </span>
+        <span
+          v-if="externalError"
+          class="text-xs text-[var(--text-secondary)]"
+        >
+          {{ externalError }}
+        </span>
+      </div>
+
+      <!-- 外部结果内容展示 -->
+      <div
+        v-if="externalResult"
+        class="px-3.5 py-3 border-t border-[var(--card-border)]"
+      >
+        <div class="text-xs text-[var(--text-secondary)] mb-1.5 font-medium flex items-center gap-2">
+          <UIcon name="i-lucide-file-text" class="size-3" />
+          外部结果文件
+          <span class="text-[10px] font-normal">({{ (externalFileSize / 1024).toFixed(1) }} KB)</span>
+          <span v-if="externalTruncated" class="text-[10px] text-[var(--color-warning-text)]">已截断</span>
+        </div>
+        <pre class="code-block max-h-96 overflow-y-auto text-xs">{{ externalResult }}</pre>
       </div>
 
       <!-- Edit/Write 差异预览 -->
@@ -277,7 +477,26 @@ const structuredPatch = computed(() => {
           <UIcon name="i-lucide-wrench" class="size-3" />
           {{ taskMeta.totalToolUseCount }} 次工具调用
         </span>
+        <!-- 查看子代理对话按钮 -->
+        <button
+          v-if="sessionContext"
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-primary hover:bg-[var(--secondary-bg)] transition-colors"
+          @click.stop="openSubagent"
+        >
+          <UIcon name="i-lucide-message-square" class="size-3" />
+          查看对话
+        </button>
       </div>
     </div>
+
+    <!-- 子代理对话抽屉（Teleport 到 body，避免嵌套 overflow 问题） -->
+    <ConversationSubagentSlideover
+      v-if="taskMeta && sessionContext"
+      :open="showSubagent"
+      :project="sessionContext.project.value"
+      :session-id="sessionContext.sessionId.value"
+      :agent-id="taskMeta.agentId"
+      @update:open="showSubagent = $event"
+    />
   </div>
 </template>
