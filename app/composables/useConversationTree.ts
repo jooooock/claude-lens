@@ -86,7 +86,8 @@ export function useConversationTree(
       return {
         key: key || `auto-${turnCounter++}`,
         assistantBlocks: [],
-        systemEvents: [],
+        preSystemEvents: [],
+        postSystemEvents: [],
         progressEvents: []
       }
     }
@@ -100,9 +101,11 @@ export function useConversationTree(
         const ur = r as UserRecord
         // 跳过不应展示的用户消息：
         // - isMeta: 系统注入的元数据
+        // - isCompactSummary: 上下文压缩后生成的摘要消息
         // - toolUseResult: 工具返回结果（已通过 toolResultMap 关联到工具调用）
         // - 全部是 tool_result 的内容块：纯工具返回消息
         if (ur.isMeta) continue
+        if (ur.isCompactSummary) continue
         if (ur.toolUseResult !== undefined) continue
         if (Array.isArray(ur.message.content) && ur.message.content.every(b => b.type === 'tool_result')) continue
 
@@ -164,7 +167,16 @@ export function useConversationTree(
         if (!currentTurn) {
           currentTurn = createTurn()
         }
-        currentTurn.systemEvents.push(sr)
+
+        // 按 subtype 分类到前置/后置组：
+        // compact_boundary 是上下文压缩分隔符，在语义上属于 turn 之间的分隔，显示在用户消息之前
+        // 其余（stop_hook_summary、api_error、local_command、turn_duration）
+        // 都是响应期间或之后的事件，显示在 assistant 块之后
+        if ('subtype' in sr && sr.subtype === 'compact_boundary') {
+          currentTurn.preSystemEvents.push(sr)
+        } else {
+          currentTurn.postSystemEvents.push(sr)
+        }
 
         // 特殊处理：将 turn_duration 记录的耗时关联到 assistantMeta
         if (isTurnDuration(sr) && currentTurn.assistantMeta) {

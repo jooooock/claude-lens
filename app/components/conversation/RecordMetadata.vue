@@ -83,7 +83,7 @@ const shortCwd = computed(() => {
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-fingerprint" class="size-3 text-[var(--text-secondary)] shrink-0" />
           <span class="text-[var(--text-secondary)]">UUID：</span>
-          <span class="font-mono truncate" :title="record.uuid">{{ record.uuid.slice(0, 8) }}...</span>
+          <span class="font-mono truncate" :title="record.uuid">{{ record.uuid?.slice(0, 8) ?? '—' }}...</span>
         </div>
 
         <!-- Sidechain 标志 -->

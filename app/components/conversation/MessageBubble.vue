@@ -71,8 +71,47 @@ const { open: openPreview } = useImagePreview()
 
 const expanded = ref(true)
 
-/** 内容摘要（折叠时显示）：取消息文本的第一行，超过 80 字符截断并加省略号 */
+/**
+ * 检测用户消息是否为斜杠命令（如 /insights, /compact 等）。
+ * Claude Code 的斜杠命令在 JSONL 中以 XML 格式存储：
+ *   <command-message>insights</command-message>\n<command-name>/insights</command-name>
+ * 返回解析出的命令名（如 "/insights"），若不是命令消息则返回 null。
+ */
+const commandName = computed<string | null>(() => {
+  if (props.role !== 'user') return null
+  const text = messageText.value
+  if (!text) return null
+  const match = text.match(/<command-name>\s*(\/[^<]+?)\s*<\/command-name>/)
+  return match ? match[1]!.trim() : null
+})
+
+/**
+ * 检测用户消息是否为本地命令输出（Hook 或脚本的执行结果）。
+ * Claude Code 的本地命令输出在 JSONL 中以 XML 格式存储：
+ *   <local-command-stdout>Goodbye!</local-command-stdout>
+ *   <local-command-stderr>error message</local-command-stderr>
+ * 返回解析出的 stdout/stderr 内容，若不是本地命令输出则返回 null。
+ */
+const localCommandOutput = computed<{ stdout?: string, stderr?: string } | null>(() => {
+  if (props.role !== 'user') return null
+  const text = messageText.value
+  if (!text) return null
+  const stdoutMatch = text.match(/<local-command-stdout>([\s\S]*?)<\/local-command-stdout>/)
+  const stderrMatch = text.match(/<local-command-stderr>([\s\S]*?)<\/local-command-stderr>/)
+  if (!stdoutMatch && !stderrMatch) return null
+  return {
+    stdout: stdoutMatch?.[1] || undefined,
+    stderr: stderrMatch?.[1] || undefined,
+  }
+})
+
+/** 内容摘要（折叠时显示）：命令消息显示命令名，本地命令输出显示截断的输出，普通消息取第一行 */
 const preview = computed(() => {
+  if (commandName.value) return commandName.value
+  if (localCommandOutput.value) {
+    const out = localCommandOutput.value.stdout || localCommandOutput.value.stderr || ''
+    return out.length > 60 ? out.slice(0, 60) + '...' : out
+  }
   const text = messageText.value
   if (!text) return ''
   const first = text.split('\n')[0] ?? ''
@@ -134,9 +173,43 @@ function onMarkdownClick(e: MouseEvent) {
       v-if="expanded"
       class="px-5 py-4 border-t border-[var(--card-border)]"
     >
+      <!-- 斜杠命令：渲染为样式化的命令徽章，而非显示原始 XML 标签 -->
+      <div
+        v-if="commandName"
+        class="flex items-center gap-2"
+      >
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--secondary-bg)] border border-[var(--card-border)]">
+          <UIcon name="i-lucide-terminal" class="size-4 text-primary" />
+          <span class="text-sm font-mono font-semibold text-primary">{{ commandName }}</span>
+        </span>
+      </div>
+
+      <!-- 本地命令输出：终端风格渲染 stdout/stderr -->
+      <div
+        v-else-if="localCommandOutput"
+        class="space-y-2"
+      >
+        <!-- stdout 输出 -->
+        <div
+          v-if="localCommandOutput.stdout"
+          class="flex items-start gap-2"
+        >
+          <UIcon name="i-lucide-terminal" class="size-3.5 mt-1 shrink-0 text-green-500" />
+          <pre class="code-block flex-1 text-xs max-h-64 overflow-y-auto">{{ localCommandOutput.stdout }}</pre>
+        </div>
+        <!-- stderr 输出 -->
+        <div
+          v-if="localCommandOutput.stderr"
+          class="flex items-start gap-2"
+        >
+          <UIcon name="i-lucide-circle-x" class="size-3.5 mt-1 shrink-0 text-[var(--color-error-text)]" />
+          <pre class="code-block flex-1 text-xs max-h-64 overflow-y-auto border-l-2 border-[var(--color-error-border)]">{{ localCommandOutput.stderr }}</pre>
+        </div>
+      </div>
+
       <!-- 图片 -->
       <div
-        v-if="images.length"
+        v-else-if="images.length"
         class="mb-3 flex flex-wrap gap-2"
       >
         <img
@@ -151,7 +224,7 @@ function onMarkdownClick(e: MouseEvent) {
 
       <!-- Markdown 渲染 -->
       <div
-        v-if="isMarkdown"
+        v-else-if="isMarkdown"
         class="markdown-body"
         @click="onMarkdownClick"
         v-html="renderedHtml"

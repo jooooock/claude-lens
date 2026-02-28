@@ -22,13 +22,14 @@
 /**
  * 所有 JSONL 记录的最小公共字段。
  * - type: 记录类型标识符
- * - uuid: 每条记录的唯一 ID
+ * - uuid: 每条记录的唯一 ID（queue-operation 类型可能缺失）
  * - timestamp: ISO 8601 时间戳
  * - sessionId: 所属会话 ID（可选，部分旧格式没有）
  */
 export interface BaseRecord {
   type: string
-  uuid: string
+  /** 记录唯一 ID（queue-operation 类型可能缺失此字段） */
+  uuid?: string
   timestamp: string
   sessionId?: string
 }

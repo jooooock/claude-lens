@@ -3,11 +3,12 @@
 
   用途：
     渲染整个对话的 Turn 序列。每个 Turn 按以下顺序渲染内容：
-    1. 系统事件（CompactBoundary / ApiError / StopHookSummary / LocalCommand）
+    1. 前置系统事件（CompactBoundary 上下文压缩分隔线）
     2. 用户消息（右对齐，占 3/5 宽度）
     3. Assistant 内容块（左对齐，按序渲染文本 / Thinking / 工具调用）
     4. AssistantMetaBar（模型、Token、耗时等元数据）
-    5. 进度事件（折叠式，受 showProgress 开关控制）
+    5. 后置系统事件（StopHookSummary / ApiError / LocalCommand）
+    6. 进度事件（折叠式，受 showProgress 开关控制）
     底部有加载指示器。
 
   Props：
@@ -21,9 +22,9 @@
 -->
 <script setup lang="ts">
 import type { ConversationTurn } from '~/types/api'
-import { isCompactBoundary, isStopHookSummary, isApiError, isLocalCommand, isTurnDuration } from '~/types/records'
+import { isCompactBoundary, isStopHookSummary, isApiError, isLocalCommand } from '~/types/records'
 
-/** @property {ConversationTurn[]} turns - 对话轮次数组，每个 Turn 包含 userMessage、assistantBlocks、systemEvents、progressEvents 等 */
+/** @property {ConversationTurn[]} turns - 对话轮次数组，每个 Turn 包含 userMessage、assistantBlocks、preSystemEvents、postSystemEvents、progressEvents 等 */
 /** @property {boolean} loading - 数据加载状态，控制底部 spinner 的显示 */
 /** @property {boolean} [showProgress] - 是否展示进度事件区域，由过滤器面板的 Progress 开关控制 */
 defineProps<{
@@ -41,25 +42,12 @@ defineProps<{
       :data-turn-index="i"
       class="space-y-3"
     >
-      <!-- 系统事件（按子类型分发渲染） -->
-      <template v-for="evt in turn.systemEvents" :key="`sys-${evt.uuid}`">
+      <!-- 前置系统事件：compact_boundary 上下文压缩分隔线（显示在用户消息之前） -->
+      <template v-for="(evt, ei) in turn.preSystemEvents" :key="`pre-sys-${evt.uuid || ei}`">
         <ConversationCompactBoundary
           v-if="isCompactBoundary(evt)"
           :record="evt"
         />
-        <ConversationApiErrorBlock
-          v-else-if="isApiError(evt)"
-          :record="evt"
-        />
-        <ConversationStopHookSummaryBlock
-          v-else-if="isStopHookSummary(evt)"
-          :record="evt"
-        />
-        <ConversationLocalCommandBlock
-          v-else-if="isLocalCommand(evt)"
-          :record="evt"
-        />
-        <!-- turn_duration 不单独渲染，已集成到 AssistantMetaBar -->
       </template>
 
       <!-- 用户消息（右对齐） -->
@@ -132,6 +120,23 @@ defineProps<{
           </div>
         </div>
       </div>
+
+      <!-- 后置系统事件：stop_hook_summary / api_error / local_command（显示在 assistant 块之后） -->
+      <template v-for="(evt, ei) in turn.postSystemEvents" :key="`post-sys-${evt.uuid || ei}`">
+        <ConversationApiErrorBlock
+          v-if="isApiError(evt)"
+          :record="evt"
+        />
+        <ConversationStopHookSummaryBlock
+          v-else-if="isStopHookSummary(evt)"
+          :record="evt"
+        />
+        <ConversationLocalCommandBlock
+          v-else-if="isLocalCommand(evt)"
+          :record="evt"
+        />
+        <!-- turn_duration 不单独渲染，已集成到 AssistantMetaBar -->
+      </template>
 
       <!-- 进度事件（折叠式，受 showProgress 开关控制） -->
       <div v-if="showProgress && turn.progressEvents?.length" class="flex justify-start">

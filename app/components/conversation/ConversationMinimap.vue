@@ -30,7 +30,7 @@ const blocks = computed<MinimapBlock[]>(() => {
   const result: MinimapBlock[] = []
   props.turns.forEach((turn, i) => {
     // 1. 仅 compact_boundary 系统事件 → 琥珀色块
-    const hasCompact = turn.systemEvents.some(e => 'subtype' in e && e.subtype === 'compact_boundary')
+    const hasCompact = turn.preSystemEvents.some(e => 'subtype' in e && e.subtype === 'compact_boundary')
     if (hasCompact) {
       result.push({ kind: 'system', turnIndex: i, weight: 4 })
     }

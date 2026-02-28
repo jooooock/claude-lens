@@ -74,8 +74,16 @@ export interface ConversationTurn {
   userMessage?: import('./records').UserRecord
   /** assistant 的响应内容块（文本 / 思考 / 工具调用） */
   assistantBlocks: AssistantBlock[]
-  /** 系统事件（API 错误、Hook 摘要、上下文压缩等） */
-  systemEvents: import('./records').SystemRecord[]
+  /**
+   * 前置系统事件（显示在用户消息之前）：compact_boundary 上下文压缩分隔线。
+   * 这些事件在语义上是 turn 之间的分隔标记，适合放在用户消息之前。
+   */
+  preSystemEvents: import('./records').SystemRecord[]
+  /**
+   * 后置系统事件（显示在 assistant 响应之后）：stop_hook_summary、api_error、local_command 等。
+   * 这些事件在时间线上发生在 assistant 响应期间或之后，放在 assistant 块后更符合逻辑。
+   */
+  postSystemEvents: import('./records').SystemRecord[]
   /** assistant 回复的元数据（模型、token 用量、stop reason 等） */
   assistantMeta?: AssistantMeta
   /** 进度事件（Hook / Bash / MCP / Agent 的中间状态通知） */
