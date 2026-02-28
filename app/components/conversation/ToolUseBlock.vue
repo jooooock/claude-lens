@@ -37,7 +37,7 @@ const expanded = ref(false)
 const sessionContext = inject<{
   project: Ref<string>
   sessionId: Ref<string>
-}>('sessionContext', null as any)
+}>('sessionContext', undefined as unknown as { project: Ref<string>, sessionId: Ref<string> })
 
 /** 工具名称到 Lucide 图标名的映射表，未匹配的工具使用默认的扳手图标 */
 const toolIcons: Record<string, string> = {
@@ -308,12 +308,24 @@ const todoStatusColors: Record<string, string> = {
         v-if="bashFlags && (bashFlags.isError || bashFlags.interrupted)"
         class="px-3.5 py-2 border-t border-[var(--card-border)] flex items-center gap-2"
       >
-        <span v-if="bashFlags.isError" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-error-bg)] text-[var(--color-error-text)] border border-[var(--color-error-border)]">
-          <UIcon name="i-lucide-circle-x" class="size-3" />
+        <span
+          v-if="bashFlags.isError"
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-error-bg)] text-[var(--color-error-text)] border border-[var(--color-error-border)]"
+        >
+          <UIcon
+            name="i-lucide-circle-x"
+            class="size-3"
+          />
           错误
         </span>
-        <span v-if="bashFlags.interrupted" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]">
-          <UIcon name="i-lucide-pause-circle" class="size-3" />
+        <span
+          v-if="bashFlags.interrupted"
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]"
+        >
+          <UIcon
+            name="i-lucide-pause-circle"
+            class="size-3"
+          />
           已中断
         </span>
       </div>
@@ -343,7 +355,10 @@ const todoStatusColors: Record<string, string> = {
               ]"
             >
               {{ todo.content }}
-              <span v-if="todo.status === 'in_progress' && todo.activeForm" class="text-[var(--text-secondary)] ml-1">
+              <span
+                v-if="todo.status === 'in_progress' && todo.activeForm"
+                class="text-[var(--text-secondary)] ml-1"
+              >
                 ({{ todo.activeForm }})
               </span>
             </span>
@@ -383,14 +398,20 @@ const todoStatusColors: Record<string, string> = {
             class="text-xs text-primary hover:underline inline-flex items-center gap-1"
             @click.stop="loadExternalResult"
           >
-            <UIcon name="i-lucide-download" class="size-3" />
+            <UIcon
+              name="i-lucide-download"
+              class="size-3"
+            />
             加载外部结果文件
           </button>
           <span
             v-if="loadingExternal"
             class="text-xs text-[var(--text-secondary)] inline-flex items-center gap-1"
           >
-            <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+            <UIcon
+              name="i-lucide-loader-2"
+              class="size-3 animate-spin"
+            />
             加载中...
           </span>
           <span
@@ -415,14 +436,20 @@ const todoStatusColors: Record<string, string> = {
           class="text-xs text-primary hover:underline inline-flex items-center gap-1"
           @click.stop="loadExternalResult"
         >
-          <UIcon name="i-lucide-download" class="size-3" />
+          <UIcon
+            name="i-lucide-download"
+            class="size-3"
+          />
           加载外部结果文件
         </button>
         <span
           v-if="loadingExternal"
           class="text-xs text-[var(--text-secondary)] inline-flex items-center gap-1"
         >
-          <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+          <UIcon
+            name="i-lucide-loader-2"
+            class="size-3 animate-spin"
+          />
           加载中...
         </span>
         <span
@@ -439,10 +466,16 @@ const todoStatusColors: Record<string, string> = {
         class="px-3.5 py-3 border-t border-[var(--card-border)]"
       >
         <div class="text-xs text-[var(--text-secondary)] mb-1.5 font-medium flex items-center gap-2">
-          <UIcon name="i-lucide-file-text" class="size-3" />
+          <UIcon
+            name="i-lucide-file-text"
+            class="size-3"
+          />
           外部结果文件
           <span class="text-[10px] font-normal">({{ (externalFileSize / 1024).toFixed(1) }} KB)</span>
-          <span v-if="externalTruncated" class="text-[10px] text-[var(--color-warning-text)]">已截断</span>
+          <span
+            v-if="externalTruncated"
+            class="text-[10px] text-[var(--color-warning-text)]"
+          >已截断</span>
         </div>
         <pre class="code-block max-h-96 overflow-y-auto text-xs">{{ externalResult }}</pre>
       </div>
@@ -452,7 +485,9 @@ const todoStatusColors: Record<string, string> = {
         v-if="structuredPatch"
         class="px-3.5 py-3 border-t border-[var(--card-border)]"
       >
-        <div class="text-xs text-[var(--text-secondary)] mb-1.5 font-medium">差异 Diff</div>
+        <div class="text-xs text-[var(--text-secondary)] mb-1.5 font-medium">
+          差异 Diff
+        </div>
         <pre class="code-block max-h-64 overflow-y-auto">{{ structuredPatch }}</pre>
       </div>
 
@@ -462,19 +497,31 @@ const todoStatusColors: Record<string, string> = {
         class="px-3.5 py-2 border-t border-[var(--card-border)] flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-secondary)]"
       >
         <span class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-git-branch" class="size-3" />
+          <UIcon
+            name="i-lucide-git-branch"
+            class="size-3"
+          />
           {{ taskMeta.agentId.slice(0, 8) }}...
         </span>
         <span class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-timer" class="size-3" />
+          <UIcon
+            name="i-lucide-timer"
+            class="size-3"
+          />
           {{ (taskMeta.totalDurationMs / 1000).toFixed(1) }}s
         </span>
         <span class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-coins" class="size-3" />
+          <UIcon
+            name="i-lucide-coins"
+            class="size-3"
+          />
           {{ taskMeta.totalTokens.toLocaleString() }} tokens
         </span>
         <span class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-wrench" class="size-3" />
+          <UIcon
+            name="i-lucide-wrench"
+            class="size-3"
+          />
           {{ taskMeta.totalToolUseCount }} 次工具调用
         </span>
         <!-- 查看子代理对话按钮 -->
@@ -483,7 +530,10 @@ const todoStatusColors: Record<string, string> = {
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-primary hover:bg-[var(--secondary-bg)] transition-colors"
           @click.stop="openSubagent"
         >
-          <UIcon name="i-lucide-message-square" class="size-3" />
+          <UIcon
+            name="i-lucide-message-square"
+            class="size-3"
+          />
           查看对话
         </button>
       </div>

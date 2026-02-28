@@ -13,7 +13,7 @@
 
 import type { JsonlRecord, UserRecord, AssistantRecord, SystemRecord, ProgressRecord, ToolUseContent, TokenUsage } from '~/types/records'
 import { isTurnDuration } from '~/types/records'
-import type { ConversationTurn, ConversationFilters, AssistantMeta } from '~/types/api'
+import type { ConversationTurn, ConversationFilters } from '~/types/api'
 
 /** 默认过滤配置：隐藏进度事件和旁支链路，显示系统事件和思考 */
 const defaultFilters: ConversationFilters = {

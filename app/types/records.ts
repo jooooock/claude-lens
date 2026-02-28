@@ -553,12 +553,12 @@ export interface LocalCommandRecord extends ConversationRecord {
  * 系统记录联合类型。
  * 通过 subtype 字段区分具体子类型，使用类型守卫函数（如 isApiError）进行安全分发。
  */
-export type SystemRecord =
-  | StopHookSummaryRecord
-  | CompactBoundaryRecord
-  | TurnDurationRecord
-  | ApiErrorRecord
-  | LocalCommandRecord
+export type SystemRecord
+  = | StopHookSummaryRecord
+    | CompactBoundaryRecord
+    | TurnDurationRecord
+    | ApiErrorRecord
+    | LocalCommandRecord
 
 // =====================================================================
 // 6. file-history-snapshot — 文件历史快照

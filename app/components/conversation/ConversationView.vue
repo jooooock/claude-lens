@@ -43,7 +43,10 @@ defineProps<{
       class="space-y-3"
     >
       <!-- 前置系统事件：compact_boundary 上下文压缩分隔线（显示在用户消息之前） -->
-      <template v-for="(evt, ei) in turn.preSystemEvents" :key="`pre-sys-${evt.uuid || ei}`">
+      <template
+        v-for="(evt, ei) in turn.preSystemEvents"
+        :key="`pre-sys-${evt.uuid || ei}`"
+      >
         <ConversationCompactBoundary
           v-if="isCompactBoundary(evt)"
           :record="evt"
@@ -114,7 +117,10 @@ defineProps<{
         </template>
 
         <!-- Assistant 元数据行 -->
-        <div v-if="turn.assistantMeta" class="flex justify-start">
+        <div
+          v-if="turn.assistantMeta"
+          class="flex justify-start"
+        >
           <div class="w-3/5">
             <ConversationAssistantMetaBar :meta="turn.assistantMeta" />
           </div>
@@ -122,7 +128,10 @@ defineProps<{
       </div>
 
       <!-- 后置系统事件：stop_hook_summary / api_error / local_command（显示在 assistant 块之后） -->
-      <template v-for="(evt, ei) in turn.postSystemEvents" :key="`post-sys-${evt.uuid || ei}`">
+      <template
+        v-for="(evt, ei) in turn.postSystemEvents"
+        :key="`post-sys-${evt.uuid || ei}`"
+      >
         <ConversationApiErrorBlock
           v-if="isApiError(evt)"
           :record="evt"
@@ -139,7 +148,10 @@ defineProps<{
       </template>
 
       <!-- 进度事件（折叠式，受 showProgress 开关控制） -->
-      <div v-if="showProgress && turn.progressEvents?.length" class="flex justify-start">
+      <div
+        v-if="showProgress && turn.progressEvents?.length"
+        class="flex justify-start"
+      >
         <div class="w-3/5">
           <ConversationProgressSection :events="turn.progressEvents" />
         </div>

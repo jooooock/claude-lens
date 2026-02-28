@@ -40,15 +40,24 @@ const hasErrors = computed(() => {
       class="w-full flex items-center gap-2 px-3.5 py-2.5 hover:bg-[var(--color-info-bg)] transition-all duration-300"
       @click="expanded = !expanded"
     >
-      <UIcon name="i-lucide-webhook" class="size-4 text-[var(--color-info-text)]" />
+      <UIcon
+        name="i-lucide-webhook"
+        class="size-4 text-[var(--color-info-text)]"
+      />
       <span class="text-sm font-semibold text-[var(--color-info-text)]">Hook 摘要</span>
       <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[var(--color-info-bg)] text-[var(--color-info-text)] text-xs font-medium">
         {{ record.hookCount }}
       </span>
-      <span v-if="record.preventedContinuation" class="text-xs text-[var(--color-warning-text)]">
+      <span
+        v-if="record.preventedContinuation"
+        class="text-xs text-[var(--color-warning-text)]"
+      >
         已阻止继续
       </span>
-      <span v-if="hasErrors" class="text-xs text-[var(--color-error-text)]">
+      <span
+        v-if="hasErrors"
+        class="text-xs text-[var(--color-error-text)]"
+      >
         有错误
       </span>
       <UIcon
@@ -57,12 +66,21 @@ const hasErrors = computed(() => {
       />
     </button>
 
-    <div v-if="expanded" class="border-t border-[var(--color-info-border)] px-3.5 py-3 space-y-2 text-xs">
+    <div
+      v-if="expanded"
+      class="border-t border-[var(--color-info-border)] px-3.5 py-3 space-y-2 text-xs"
+    >
       <!-- Hook 命令列表 -->
       <div v-if="hookNames.length">
-        <div class="text-[var(--text-secondary)] mb-1">Hook 命令：</div>
+        <div class="text-[var(--text-secondary)] mb-1">
+          Hook 命令：
+        </div>
         <div class="space-y-0.5">
-          <div v-for="(cmd, i) in hookNames" :key="i" class="font-mono text-[var(--text-primary)]">
+          <div
+            v-for="(cmd, i) in hookNames"
+            :key="i"
+            class="font-mono text-[var(--text-primary)]"
+          >
             {{ cmd }}
           </div>
         </div>
@@ -76,7 +94,9 @@ const hasErrors = computed(() => {
 
       <!-- 错误 -->
       <div v-if="hasErrors">
-        <div class="text-[var(--color-error-text)] mb-1">错误：</div>
+        <div class="text-[var(--color-error-text)] mb-1">
+          错误：
+        </div>
         <pre class="code-block max-h-32 overflow-y-auto">{{ JSON.stringify(record.hookErrors, null, 2) }}</pre>
       </div>
     </div>

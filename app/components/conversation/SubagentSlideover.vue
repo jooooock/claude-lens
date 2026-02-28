@@ -95,7 +95,10 @@ watch(() => props.open, (isOpen) => {
           v-if="loading"
           class="flex items-center justify-center py-20"
         >
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-primary" />
+          <UIcon
+            name="i-lucide-loader-2"
+            class="size-6 animate-spin text-primary"
+          />
           <span class="ml-2 text-sm text-[var(--text-secondary)]">加载子代理对话...</span>
         </div>
 
@@ -104,8 +107,13 @@ watch(() => props.open, (isOpen) => {
           v-else-if="error"
           class="flex flex-col items-center justify-center py-20 text-center"
         >
-          <UIcon name="i-lucide-alert-circle" class="size-8 text-[var(--color-error-text)] mb-2" />
-          <p class="text-sm text-[var(--color-error-text)]">{{ error }}</p>
+          <UIcon
+            name="i-lucide-alert-circle"
+            class="size-8 text-[var(--color-error-text)] mb-2"
+          />
+          <p class="text-sm text-[var(--color-error-text)]">
+            {{ error }}
+          </p>
           <button
             class="mt-3 text-xs text-primary hover:underline"
             @click="loadSubagent"

@@ -101,7 +101,7 @@ const localCommandOutput = computed<{ stdout?: string, stderr?: string } | null>
   if (!stdoutMatch && !stderrMatch) return null
   return {
     stdout: stdoutMatch?.[1] || undefined,
-    stderr: stderrMatch?.[1] || undefined,
+    stderr: stderrMatch?.[1] || undefined
   }
 })
 
@@ -179,7 +179,10 @@ function onMarkdownClick(e: MouseEvent) {
         class="flex items-center gap-2"
       >
         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--secondary-bg)] border border-[var(--card-border)]">
-          <UIcon name="i-lucide-terminal" class="size-4 text-primary" />
+          <UIcon
+            name="i-lucide-terminal"
+            class="size-4 text-primary"
+          />
           <span class="text-sm font-mono font-semibold text-primary">{{ commandName }}</span>
         </span>
       </div>
@@ -194,7 +197,10 @@ function onMarkdownClick(e: MouseEvent) {
           v-if="localCommandOutput.stdout"
           class="flex items-start gap-2"
         >
-          <UIcon name="i-lucide-terminal" class="size-3.5 mt-1 shrink-0 text-green-500" />
+          <UIcon
+            name="i-lucide-terminal"
+            class="size-3.5 mt-1 shrink-0 text-green-500"
+          />
           <pre class="code-block flex-1 text-xs max-h-64 overflow-y-auto">{{ localCommandOutput.stdout }}</pre>
         </div>
         <!-- stderr 输出 -->
@@ -202,7 +208,10 @@ function onMarkdownClick(e: MouseEvent) {
           v-if="localCommandOutput.stderr"
           class="flex items-start gap-2"
         >
-          <UIcon name="i-lucide-circle-x" class="size-3.5 mt-1 shrink-0 text-[var(--color-error-text)]" />
+          <UIcon
+            name="i-lucide-circle-x"
+            class="size-3.5 mt-1 shrink-0 text-[var(--color-error-text)]"
+          />
           <pre class="code-block flex-1 text-xs max-h-64 overflow-y-auto border-l-2 border-[var(--color-error-border)]">{{ localCommandOutput.stderr }}</pre>
         </div>
       </div>

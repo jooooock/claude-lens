@@ -46,49 +46,85 @@ const shortCwd = computed(() => {
       title="记录元数据"
       @click.stop
     >
-      <UIcon name="i-lucide-info" class="size-3 text-[var(--text-secondary)]" />
+      <UIcon
+        name="i-lucide-info"
+        class="size-3 text-[var(--text-secondary)]"
+      />
     </button>
 
     <template #content>
       <div class="p-3 space-y-1.5 text-xs min-w-56 max-w-80">
         <!-- 时间戳 -->
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-clock" class="size-3 text-[var(--text-secondary)] shrink-0" />
+          <UIcon
+            name="i-lucide-clock"
+            class="size-3 text-[var(--text-secondary)] shrink-0"
+          />
           <span class="text-[var(--text-secondary)]">时间：</span>
           <span class="font-mono">{{ formattedTime }}</span>
         </div>
 
         <!-- 工作目录 -->
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-folder" class="size-3 text-[var(--text-secondary)] shrink-0" />
+          <UIcon
+            name="i-lucide-folder"
+            class="size-3 text-[var(--text-secondary)] shrink-0"
+          />
           <span class="text-[var(--text-secondary)]">目录：</span>
-          <span class="font-mono truncate" :title="record.cwd">{{ shortCwd }}</span>
+          <span
+            class="font-mono truncate"
+            :title="record.cwd"
+          >{{ shortCwd }}</span>
         </div>
 
         <!-- Git 分支 -->
-        <div v-if="record.gitBranch" class="flex items-center gap-2">
-          <UIcon name="i-lucide-git-branch" class="size-3 text-[var(--text-secondary)] shrink-0" />
+        <div
+          v-if="record.gitBranch"
+          class="flex items-center gap-2"
+        >
+          <UIcon
+            name="i-lucide-git-branch"
+            class="size-3 text-[var(--text-secondary)] shrink-0"
+          />
           <span class="text-[var(--text-secondary)]">分支：</span>
           <span class="font-mono">{{ record.gitBranch }}</span>
         </div>
 
         <!-- 版本 -->
-        <div v-if="record.version" class="flex items-center gap-2">
-          <UIcon name="i-lucide-tag" class="size-3 text-[var(--text-secondary)] shrink-0" />
+        <div
+          v-if="record.version"
+          class="flex items-center gap-2"
+        >
+          <UIcon
+            name="i-lucide-tag"
+            class="size-3 text-[var(--text-secondary)] shrink-0"
+          />
           <span class="text-[var(--text-secondary)]">版本：</span>
           <span class="font-mono">v{{ record.version }}</span>
         </div>
 
         <!-- UUID -->
         <div class="flex items-center gap-2">
-          <UIcon name="i-lucide-fingerprint" class="size-3 text-[var(--text-secondary)] shrink-0" />
+          <UIcon
+            name="i-lucide-fingerprint"
+            class="size-3 text-[var(--text-secondary)] shrink-0"
+          />
           <span class="text-[var(--text-secondary)]">UUID：</span>
-          <span class="font-mono truncate" :title="record.uuid">{{ record.uuid?.slice(0, 8) ?? '—' }}...</span>
+          <span
+            class="font-mono truncate"
+            :title="record.uuid"
+          >{{ record.uuid?.slice(0, 8) ?? '—' }}...</span>
         </div>
 
         <!-- Sidechain 标志 -->
-        <div v-if="record.isSidechain" class="flex items-center gap-2">
-          <UIcon name="i-lucide-git-fork" class="size-3 text-[var(--color-warning-text)] shrink-0" />
+        <div
+          v-if="record.isSidechain"
+          class="flex items-center gap-2"
+        >
+          <UIcon
+            name="i-lucide-git-fork"
+            class="size-3 text-[var(--color-warning-text)] shrink-0"
+          />
           <span class="text-[var(--color-warning-text)] font-medium">Sidechain</span>
         </div>
       </div>

@@ -58,27 +58,46 @@ function formatDuration(ms: number): string {
     <div class="px-5 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
       <!-- 输入 Token -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-arrow-down-to-line" class="size-3.5 text-[var(--color-info-text)]" />
+        <UIcon
+          name="i-lucide-arrow-down-to-line"
+          class="size-3.5 text-[var(--color-info-text)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">输入 Token</div>
-          <div class="font-semibold">{{ formatTokens(stats.totalInputTokens) }}</div>
+          <div class="text-[var(--text-secondary)]">
+            输入 Token
+          </div>
+          <div class="font-semibold">
+            {{ formatTokens(stats.totalInputTokens) }}
+          </div>
         </div>
       </div>
 
       <!-- 输出 Token -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-arrow-up-from-line" class="size-3.5 text-[var(--color-assistant)]" />
+        <UIcon
+          name="i-lucide-arrow-up-from-line"
+          class="size-3.5 text-[var(--color-assistant)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">输出 Token</div>
-          <div class="font-semibold">{{ formatTokens(stats.totalOutputTokens) }}</div>
+          <div class="text-[var(--text-secondary)]">
+            输出 Token
+          </div>
+          <div class="font-semibold">
+            {{ formatTokens(stats.totalOutputTokens) }}
+          </div>
         </div>
       </div>
 
       <!-- 缓存命中率 -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-database" class="size-3.5 text-[var(--color-warning-text)]" />
+        <UIcon
+          name="i-lucide-database"
+          class="size-3.5 text-[var(--color-warning-text)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">缓存命中</div>
+          <div class="text-[var(--text-secondary)]">
+            缓存命中
+          </div>
           <div class="font-semibold">
             {{ stats.cacheHitRate.toFixed(1) }}%
             <span class="text-[var(--text-secondary)] font-normal ml-1">
@@ -90,9 +109,14 @@ function formatDuration(ms: number): string {
 
       <!-- 模型 -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-brain" class="size-3.5 text-[var(--primary-color)]" />
+        <UIcon
+          name="i-lucide-brain"
+          class="size-3.5 text-[var(--primary-color)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">模型</div>
+          <div class="text-[var(--text-secondary)]">
+            模型
+          </div>
           <div class="font-semibold truncate max-w-32">
             {{ stats.modelsUsed.map(m => m.replace('claude-', '')).join(', ') || '-' }}
           </div>
@@ -101,12 +125,20 @@ function formatDuration(ms: number): string {
 
       <!-- Turn 数 / 耗时 -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-message-square" class="size-3.5 text-[var(--color-user)]" />
+        <UIcon
+          name="i-lucide-message-square"
+          class="size-3.5 text-[var(--color-user)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">对话</div>
+          <div class="text-[var(--text-secondary)]">
+            对话
+          </div>
           <div class="font-semibold">
             {{ stats.turnCount }} turns
-            <span v-if="stats.totalDurationMs > 0" class="text-[var(--text-secondary)] font-normal ml-1">
+            <span
+              v-if="stats.totalDurationMs > 0"
+              class="text-[var(--text-secondary)] font-normal ml-1"
+            >
               / {{ formatDuration(stats.totalDurationMs) }}
             </span>
           </div>
@@ -115,28 +147,55 @@ function formatDuration(ms: number): string {
 
       <!-- 工具调用 -->
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-wrench" class="size-3.5 text-[var(--color-tool)]" />
+        <UIcon
+          name="i-lucide-wrench"
+          class="size-3.5 text-[var(--color-tool)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">工具调用</div>
-          <div class="font-semibold">{{ stats.totalToolCalls }}</div>
+          <div class="text-[var(--text-secondary)]">
+            工具调用
+          </div>
+          <div class="font-semibold">
+            {{ stats.totalToolCalls }}
+          </div>
         </div>
       </div>
 
       <!-- API 错误 -->
-      <div v-if="stats.apiErrorCount > 0" class="flex items-center gap-2">
-        <UIcon name="i-lucide-alert-triangle" class="size-3.5 text-[var(--color-error-text)]" />
+      <div
+        v-if="stats.apiErrorCount > 0"
+        class="flex items-center gap-2"
+      >
+        <UIcon
+          name="i-lucide-alert-triangle"
+          class="size-3.5 text-[var(--color-error-text)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">API 错误</div>
-          <div class="font-semibold text-[var(--color-error-text)]">{{ stats.apiErrorCount }}</div>
+          <div class="text-[var(--text-secondary)]">
+            API 错误
+          </div>
+          <div class="font-semibold text-[var(--color-error-text)]">
+            {{ stats.apiErrorCount }}
+          </div>
         </div>
       </div>
 
       <!-- 版本 -->
-      <div v-if="stats.claudeCodeVersion" class="flex items-center gap-2">
-        <UIcon name="i-lucide-tag" class="size-3.5 text-[var(--text-secondary)]" />
+      <div
+        v-if="stats.claudeCodeVersion"
+        class="flex items-center gap-2"
+      >
+        <UIcon
+          name="i-lucide-tag"
+          class="size-3.5 text-[var(--text-secondary)]"
+        />
         <div>
-          <div class="text-[var(--text-secondary)]">版本</div>
-          <div class="font-semibold">v{{ stats.claudeCodeVersion }}</div>
+          <div class="text-[var(--text-secondary)]">
+            版本
+          </div>
+          <div class="font-semibold">
+            v{{ stats.claudeCodeVersion }}
+          </div>
         </div>
       </div>
     </div>

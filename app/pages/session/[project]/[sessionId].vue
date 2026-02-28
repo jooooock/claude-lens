@@ -311,8 +311,14 @@ watch([project, sessionId], () => {
             v-if="memoryFilePath"
             class="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)]"
           >
-            <UIcon name="i-lucide-file-text" class="size-4 shrink-0 text-[var(--text-secondary)]" />
-            <code class="flex-1 text-xs text-[var(--text-secondary)] truncate select-all" :title="memoryFilePath">{{ memoryFilePath }}</code>
+            <UIcon
+              name="i-lucide-file-text"
+              class="size-4 shrink-0 text-[var(--text-secondary)]"
+            />
+            <code
+              class="flex-1 text-xs text-[var(--text-secondary)] truncate select-all"
+              :title="memoryFilePath"
+            >{{ memoryFilePath }}</code>
             <UButton
               :icon="copiedId === 'memory' ? 'i-lucide-check' : 'i-lucide-copy'"
               size="xs"
@@ -335,7 +341,10 @@ watch([project, sessionId], () => {
             v-if="memoryLoading"
             class="flex items-center justify-center py-10"
           >
-            <UIcon name="i-lucide-loader-2" class="size-5 animate-spin text-primary" />
+            <UIcon
+              name="i-lucide-loader-2"
+              class="size-5 animate-spin text-primary"
+            />
             <span class="ml-2 text-sm text-[var(--text-secondary)]">加载中...</span>
           </div>
           <div
@@ -368,8 +377,14 @@ watch([project, sessionId], () => {
             v-if="debugFilePath"
             class="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)]"
           >
-            <UIcon name="i-lucide-file-text" class="size-4 shrink-0 text-[var(--text-secondary)]" />
-            <code class="flex-1 text-xs text-[var(--text-secondary)] truncate select-all" :title="debugFilePath">{{ debugFilePath }}</code>
+            <UIcon
+              name="i-lucide-file-text"
+              class="size-4 shrink-0 text-[var(--text-secondary)]"
+            />
+            <code
+              class="flex-1 text-xs text-[var(--text-secondary)] truncate select-all"
+              :title="debugFilePath"
+            >{{ debugFilePath }}</code>
             <UButton
               :icon="copiedId === 'debug' ? 'i-lucide-check' : 'i-lucide-copy'"
               size="xs"
@@ -392,11 +407,17 @@ watch([project, sessionId], () => {
             v-if="debugLoading"
             class="flex items-center justify-center py-10"
           >
-            <UIcon name="i-lucide-loader-2" class="size-5 animate-spin text-primary" />
+            <UIcon
+              name="i-lucide-loader-2"
+              class="size-5 animate-spin text-primary"
+            />
             <span class="ml-2 text-sm text-[var(--text-secondary)]">加载中...</span>
           </div>
           <template v-else-if="debugContent">
-            <div v-if="debugTruncated" class="mb-3 text-xs text-[var(--color-warning-text)]">
+            <div
+              v-if="debugTruncated"
+              class="mb-3 text-xs text-[var(--color-warning-text)]"
+            >
               日志内容已截断（仅显示前 100KB）
             </div>
             <pre class="code-block text-xs max-h-[80vh] overflow-auto whitespace-pre-wrap">{{ debugContent }}</pre>

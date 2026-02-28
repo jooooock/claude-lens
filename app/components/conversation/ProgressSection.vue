@@ -84,7 +84,10 @@ function formatEvent(e: ProgressRecord): { icon: string, label: string, detail: 
       class="w-full flex items-center gap-2 px-3.5 py-2 bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-all duration-300"
       @click="expanded = !expanded"
     >
-      <UIcon name="i-lucide-activity" class="size-3.5 text-[var(--text-secondary)]" />
+      <UIcon
+        name="i-lucide-activity"
+        class="size-3.5 text-[var(--text-secondary)]"
+      />
       <span class="text-xs font-medium text-[var(--text-secondary)]">进度事件</span>
       <span class="inline-flex items-center justify-center min-w-5 h-4 px-1 rounded-full bg-[var(--card-border)] text-[10px] font-medium">
         {{ events.length }}
@@ -96,13 +99,19 @@ function formatEvent(e: ProgressRecord): { icon: string, label: string, detail: 
       />
     </button>
 
-    <div v-if="expanded" class="border-t border-[var(--card-border)] max-h-64 overflow-y-auto">
+    <div
+      v-if="expanded"
+      class="border-t border-[var(--card-border)] max-h-64 overflow-y-auto"
+    >
       <div
         v-for="(evt, i) in events"
         :key="i"
         class="flex items-center gap-2 px-3.5 py-1.5 text-[11px] border-b border-[var(--card-border)] last:border-b-0"
       >
-        <UIcon :name="formatEvent(evt).icon" class="size-3 text-[var(--text-secondary)] shrink-0" />
+        <UIcon
+          :name="formatEvent(evt).icon"
+          class="size-3 text-[var(--text-secondary)] shrink-0"
+        />
         <span class="font-medium text-[var(--text-secondary)] w-10 shrink-0">{{ formatEvent(evt).label }}</span>
         <span class="truncate text-[var(--text-primary)]">{{ formatEvent(evt).detail }}</span>
       </div>

@@ -36,7 +36,10 @@ const errorType = computed(() => props.record.error?.error?.type || '')
       class="w-full flex items-center gap-2 px-3.5 py-2.5 hover:bg-[var(--color-error-bg)] transition-all duration-300"
       @click="expanded = !expanded"
     >
-      <UIcon name="i-lucide-alert-circle" class="size-4 text-[var(--color-error-text)]" />
+      <UIcon
+        name="i-lucide-alert-circle"
+        class="size-4 text-[var(--color-error-text)]"
+      />
       <span class="text-sm font-semibold text-[var(--color-error-text)]">API 错误</span>
       <span class="text-xs text-[var(--text-secondary)]">
         {{ statusCode }} · {{ errorType }}
@@ -50,7 +53,10 @@ const errorType = computed(() => props.record.error?.error?.type || '')
       />
     </button>
 
-    <div v-if="expanded" class="border-t border-[var(--color-error-border)] px-3.5 py-3 space-y-2 text-xs">
+    <div
+      v-if="expanded"
+      class="border-t border-[var(--color-error-border)] px-3.5 py-3 space-y-2 text-xs"
+    >
       <div>
         <span class="text-[var(--text-secondary)]">错误消息：</span>
         <span class="text-[var(--color-error-text)]">{{ errorMessage }}</span>
@@ -60,7 +66,9 @@ const errorType = computed(() => props.record.error?.error?.type || '')
         {{ record.retryInMs }}ms
       </div>
       <div v-if="record.error">
-        <div class="text-[var(--text-secondary)] mb-1">原始错误：</div>
+        <div class="text-[var(--text-secondary)] mb-1">
+          原始错误：
+        </div>
         <pre class="code-block max-h-48 overflow-y-auto">{{ JSON.stringify(record.error, null, 2) }}</pre>
       </div>
     </div>

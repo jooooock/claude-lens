@@ -23,7 +23,10 @@ defineProps<{
 <template>
   <div class="card-style card-info overflow-hidden">
     <div class="flex items-center gap-2 px-3.5 py-2.5">
-      <UIcon name="i-lucide-terminal" class="size-4 text-[var(--color-info-text)]" />
+      <UIcon
+        name="i-lucide-terminal"
+        class="size-4 text-[var(--color-info-text)]"
+      />
       <span class="text-sm font-semibold text-[var(--color-info-text)]">本地命令</span>
       <span class="text-xs text-[var(--text-secondary)] truncate">{{ record.content }}</span>
     </div>
