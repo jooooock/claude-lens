@@ -57,6 +57,8 @@ const scrollEl = ref<HTMLElement>()
  */
 provide('sessionContext', { project, sessionId })
 
+/** 项目记忆文件是否存在（控制入口按钮显隐） */
+const memoryExists = ref(false)
 /** 项目记忆抽屉是否打开 */
 const showMemory = ref(false)
 /** 项目记忆内容 */
@@ -65,6 +67,19 @@ const memoryContent = ref('')
 const memoryFilePath = ref('')
 /** 项目记忆加载状态 */
 const memoryLoading = ref(false)
+
+/** 检查项目记忆文件是否存在（轻量级，不读取内容） */
+async function checkMemoryExists() {
+  try {
+    const data = await $fetch<{ exists: boolean }>(`/api/projects/${project.value}/memory-check`)
+    memoryExists.value = data.exists
+  } catch {
+    memoryExists.value = false
+  }
+}
+
+// 页面加载时立即检查
+checkMemoryExists()
 
 /** 加载项目记忆 */
 async function loadMemory() {
@@ -132,7 +147,9 @@ async function copyFilePath(path: string, id: string) {
   try {
     await navigator.clipboard.writeText(path)
     copiedId.value = id
-    setTimeout(() => { copiedId.value = '' }, 2000)
+    setTimeout(() => {
+      copiedId.value = ''
+    }, 2000)
   } catch {
     // 剪贴板 API 不可用时静默失败
   }
@@ -150,14 +167,16 @@ async function openInFileManager(path: string) {
   }
 }
 
-/** 切换会话时重置记忆和日志缓存 */
+/** 切换会话时重置记忆和日志缓存，并重新检查记忆文件是否存在 */
 watch([project, sessionId], () => {
   memoryContent.value = ''
   memoryFilePath.value = ''
+  memoryExists.value = false
   debugContent.value = ''
   debugFilePath.value = ''
   showMemory.value = false
   showDebugLog.value = false
+  checkMemoryExists()
 })
 </script>
 
@@ -174,6 +193,7 @@ watch([project, sessionId], () => {
       </div>
       <div class="flex items-center gap-1">
         <UButton
+          v-if="memoryExists"
           icon="i-lucide-brain"
           size="xs"
           color="neutral"
@@ -320,7 +340,7 @@ watch([project, sessionId], () => {
           </div>
           <div
             v-else-if="memoryContent"
-            class="prose prose-sm dark:prose-invert max-w-none"
+            class="markdown-body"
             v-html="renderMarkdown(memoryContent)"
           />
           <div

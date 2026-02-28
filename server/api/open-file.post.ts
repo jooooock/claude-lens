@@ -15,8 +15,7 @@
  *   - Linux：使用 `xdg-open` 打开文件所在目录
  */
 import { exec } from 'node:child_process'
-import { platform } from 'node:os'
-import { homedir } from 'node:os'
+import { platform, homedir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { access } from 'node:fs/promises'
 import { promisify } from 'node:util'
