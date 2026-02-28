@@ -61,11 +61,20 @@ export function useConversationTree(
       return true
     })
 
+    // ====== 第 1.5 步：按时间戳稳定排序 ======
+    // 手动执行 /compact 时，CLI 先写入 compact_boundary + isCompactSummary 记录，
+    // 再写入 /compact 命令和 Compacted 输出记录——但后者的时间戳更早（用户输入时刻）。
+    // 排序确保记录按逻辑时间顺序处理，使 /compact 命令出现在 compact_boundary 之前。
+    // 使用稳定排序，相同时间戳的记录保持原始 JSONL 顺序不变。
+    const sorted = [...filtered].sort((a, b) => {
+      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    })
+
     // ====== 第二步：建立工具返回结果的映射 ======
     // 遍历所有 user 记录，找出包含 tool_result 的记录，以 tool_use_id 为 key 建立映射。
     // 后续处理 assistant 记录中的 tool_use 块时，可以通过 ID 查找对应的返回结果。
     const toolResultMap = new Map<string, UserRecord>()
-    for (const r of filtered) {
+    for (const r of sorted) {
       if (r.type !== 'user') continue
       const ur = r as UserRecord
       if (!ur.toolUseResult) continue
@@ -96,16 +105,32 @@ export function useConversationTree(
     let currentTurn: ConversationTurn | null = null
 
     // ====== 第四步：遍历记录，构建 Turn 树 ======
-    for (const r of filtered) {
+    for (const r of sorted) {
       if (r.type === 'user') {
         const ur = r as UserRecord
         // 跳过不应展示的用户消息：
         // - isMeta: 系统注入的元数据
-        // - isCompactSummary: 上下文压缩后生成的摘要消息
+        // - isCompactSummary: 上下文压缩后的摘要 → 不作为独立消息展示，
+        //   而是提取其文本内容附加到当前 turn 的 compactSummary 字段，
+        //   供 CompactBoundary 组件在展开时显示
         // - toolUseResult: 工具返回结果（已通过 toolResultMap 关联到工具调用）
         // - 全部是 tool_result 的内容块：纯工具返回消息
         if (ur.isMeta) continue
-        if (ur.isCompactSummary) continue
+        if (ur.isCompactSummary) {
+          // 将摘要文本附加到当前 turn（其 preSystemEvents 中应已有 compact_boundary）
+          if (currentTurn) {
+            const content = ur.message.content
+            if (typeof content === 'string') {
+              currentTurn.compactSummary = content
+            } else if (Array.isArray(content)) {
+              const textParts = content.filter(b => b.type === 'text')
+              if (textParts.length) {
+                currentTurn.compactSummary = textParts.map(b => ('text' in b ? b.text : '')).join('\n')
+              }
+            }
+          }
+          continue
+        }
         if (ur.toolUseResult !== undefined) continue
         if (Array.isArray(ur.message.content) && ur.message.content.every(b => b.type === 'tool_result')) continue
 
@@ -168,11 +193,17 @@ export function useConversationTree(
           currentTurn = createTurn()
         }
 
-        // 按 subtype 分类到前置/后置组：
-        // compact_boundary 是上下文压缩分隔符，在语义上属于 turn 之间的分隔，显示在用户消息之前
+        // 按 subtype 分类：
+        // compact_boundary 是上下文压缩分隔符，在时间线上出现在上一个 turn 结束之后，
+        // 应作为独立 turn 渲染（而非附加到上一个 turn），这样分隔线显示在正确的位置——
+        // 上一轮的 Hook 摘要之后、下一条用户消息之前。
         // 其余（stop_hook_summary、api_error、local_command、turn_duration）
         // 都是响应期间或之后的事件，显示在 assistant 块之后
         if ('subtype' in sr && sr.subtype === 'compact_boundary') {
+          if (currentTurn) {
+            result.push(currentTurn)
+          }
+          currentTurn = createTurn()
           currentTurn.preSystemEvents.push(sr)
         } else {
           currentTurn.postSystemEvents.push(sr)

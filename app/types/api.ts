@@ -76,7 +76,8 @@ export interface ConversationTurn {
   assistantBlocks: AssistantBlock[]
   /**
    * 前置系统事件（显示在用户消息之前）：compact_boundary 上下文压缩分隔线。
-   * 这些事件在语义上是 turn 之间的分隔标记，适合放在用户消息之前。
+   * compact_boundary 会触发创建独立 turn（无 userMessage），确保分隔线
+   * 渲染在上一轮结束之后、下一条用户消息之前的正确位置。
    */
   preSystemEvents: import('./records').SystemRecord[]
   /**
@@ -88,6 +89,8 @@ export interface ConversationTurn {
   assistantMeta?: AssistantMeta
   /** 进度事件（Hook / Bash / MCP / Agent 的中间状态通知） */
   progressEvents: ProgressRecord[]
+  /** 上下文压缩后的摘要文本（来自 isCompactSummary 用户记录，与同一独立 turn 中的 compact_boundary 配对） */
+  compactSummary?: string
 }
 
 /**

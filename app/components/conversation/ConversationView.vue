@@ -50,6 +50,7 @@ defineProps<{
         <ConversationCompactBoundary
           v-if="isCompactBoundary(evt)"
           :record="evt"
+          :summary="turn.compactSummary"
         />
       </template>
 

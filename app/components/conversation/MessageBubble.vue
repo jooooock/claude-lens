@@ -76,11 +76,21 @@ const expanded = ref(true)
  * Claude Code 的斜杠命令在 JSONL 中以 XML 格式存储：
  *   <command-message>insights</command-message>\n<command-name>/insights</command-name>
  * 返回解析出的命令名（如 "/insights"），若不是命令消息则返回 null。
+ *
+ * 严格检查：移除所有已知命令 XML 标签后，剩余内容必须为空。
+ * 这避免了用户粘贴的包含命令 XML 的普通文本被误匹配。
  */
 const commandName = computed<string | null>(() => {
   if (props.role !== 'user') return null
   const text = messageText.value
   if (!text) return null
+  // 严格检查：移除所有已知命令 XML 标签后，剩余内容必须为空
+  const stripped = text
+    .replace(/<command-name>[^<]*<\/command-name>/g, '')
+    .replace(/<command-message>[^<]*<\/command-message>/g, '')
+    .replace(/<command-args>[^<]*<\/command-args>/g, '')
+    .trim()
+  if (stripped) return null
   const match = text.match(/<command-name>\s*(\/[^<]+?)\s*<\/command-name>/)
   return match ? match[1]!.trim() : null
 })
@@ -91,11 +101,21 @@ const commandName = computed<string | null>(() => {
  *   <local-command-stdout>Goodbye!</local-command-stdout>
  *   <local-command-stderr>error message</local-command-stderr>
  * 返回解析出的 stdout/stderr 内容，若不是本地命令输出则返回 null。
+ *
+ * 严格检查：移除所有 stdout/stderr XML 标签后，剩余内容必须为空。
+ * 这避免了用户粘贴的包含这些 XML 标签的普通文本（如 JSON 文本）被误匹配。
  */
 const localCommandOutput = computed<{ stdout?: string, stderr?: string } | null>(() => {
   if (props.role !== 'user') return null
   const text = messageText.value
   if (!text) return null
+  // 严格检查：移除所有 stdout/stderr/caveat XML 标签后，剩余内容必须为空
+  const stripped = text
+    .replace(/<local-command-stdout>[\s\S]*?<\/local-command-stdout>/g, '')
+    .replace(/<local-command-stderr>[\s\S]*?<\/local-command-stderr>/g, '')
+    .replace(/<local-command-caveat>[\s\S]*?<\/local-command-caveat>/g, '')
+    .trim()
+  if (stripped) return null
   const stdoutMatch = text.match(/<local-command-stdout>([\s\S]*?)<\/local-command-stdout>/)
   const stderrMatch = text.match(/<local-command-stderr>([\s\S]*?)<\/local-command-stderr>/)
   if (!stdoutMatch && !stderrMatch) return null
@@ -105,12 +125,59 @@ const localCommandOutput = computed<{ stdout?: string, stderr?: string } | null>
   }
 })
 
+/**
+ * 从本地命令输出中提取 caveat（注意事项）标签内容。
+ * Claude Code 的本地命令输出中可能包含 caveat 信息：
+ *   <local-command-caveat>注意事项文本</local-command-caveat>
+ * 仅在 localCommandOutput 已匹配时才解析（共享同一条记录）。
+ */
+const localCommandCaveat = computed<string | null>(() => {
+  // 仅在 localCommandOutput 匹配时提取 caveat（同一条本地命令记录）
+  if (!localCommandOutput.value) return null
+  const text = messageText.value
+  if (!text) return null
+  const match = text.match(/<local-command-caveat>([\s\S]*?)<\/local-command-caveat>/)
+  return match ? match[1]!.trim() : null
+})
+
+/**
+ * 检测用户消息是否为后台任务通知。
+ * Claude Code 的后台任务完成通知在 JSONL 中以 XML 格式存储：
+ *   <task-notification>
+ *     <task-id>beba7b9</task-id>
+ *     <status>completed</status>
+ *     <summary>Background command ... completed (exit code 0)</summary>
+ *   </task-notification>
+ * 返回解析出的 taskId、status、summary，若不是任务通知则返回 null。
+ *
+ * 注意：真实的 task-notification 记录中，标签后面可能有系统注入的尾部文字
+ * （如 "Read the output file..."），因此不能用"移除标签后为空"的严格检查。
+ * 改为检查内容以 <task-notification 开头，排除用户粘贴 JSON 包裹 XML 的情况。
+ */
+const taskNotification = computed<{ taskId: string, status: string, summary: string } | null>(() => {
+  if (props.role !== 'user') return null
+  const text = messageText.value
+  if (!text) return null
+  // 严格检查：内容必须以 <task-notification 开头（排除 JSON 等包裹的情况）
+  if (!/^\s*<task-notification[\s>]/.test(text)) return null
+  const match = text.match(/<task-notification>([\s\S]*?)<\/task-notification>/)
+  if (!match) return null
+  const inner = match[1]!
+  const taskId = inner.match(/<task-id>([\s\S]*?)<\/task-id>/)?.[1]?.trim() || ''
+  const status = inner.match(/<status>([\s\S]*?)<\/status>/)?.[1]?.trim() || ''
+  const summary = inner.match(/<summary>([\s\S]*?)<\/summary>/)?.[1]?.trim() || ''
+  return { taskId, status, summary }
+})
+
 /** 内容摘要（折叠时显示）：命令消息显示命令名，本地命令输出显示截断的输出，普通消息取第一行 */
 const preview = computed(() => {
   if (commandName.value) return commandName.value
   if (localCommandOutput.value) {
     const out = localCommandOutput.value.stdout || localCommandOutput.value.stderr || ''
     return out.length > 60 ? out.slice(0, 60) + '...' : out
+  }
+  if (taskNotification.value) {
+    return taskNotification.value.summary || `Task ${taskNotification.value.taskId}`
   }
   const text = messageText.value
   if (!text) return ''
@@ -187,7 +254,7 @@ function onMarkdownClick(e: MouseEvent) {
         </span>
       </div>
 
-      <!-- 本地命令输出：终端风格渲染 stdout/stderr -->
+      <!-- 本地命令输出：终端风格渲染 stdout/stderr/caveat -->
       <div
         v-else-if="localCommandOutput"
         class="space-y-2"
@@ -214,38 +281,95 @@ function onMarkdownClick(e: MouseEvent) {
           />
           <pre class="code-block flex-1 text-xs max-h-64 overflow-y-auto border-l-2 border-[var(--color-error-border)]">{{ localCommandOutput.stderr }}</pre>
         </div>
-      </div>
-
-      <!-- 图片 -->
-      <div
-        v-else-if="images.length"
-        class="mb-3 flex flex-wrap gap-2"
-      >
-        <img
-          v-for="(img, i) in images"
-          :key="i"
-          :src="`data:${img.source.media_type};base64,${img.source.data}`"
-          class="max-w-sm rounded-md border border-default cursor-pointer transition-opacity hover:opacity-80"
-          alt="uploaded image"
-          @click="openPreview(`data:${img.source.media_type};base64,${img.source.data}`)"
+        <!-- caveat 注意事项（淡化的系统提示） -->
+        <div
+          v-if="localCommandCaveat"
+          class="flex items-start gap-2 mt-1"
         >
+          <UIcon
+            name="i-lucide-info"
+            class="size-3.5 mt-0.5 shrink-0 text-[var(--text-secondary)]"
+          />
+          <span class="text-xs text-[var(--text-secondary)] italic">{{ localCommandCaveat }}</span>
+        </div>
       </div>
 
-      <!-- Markdown 渲染 -->
-      <div
-        v-else-if="isMarkdown"
-        class="markdown-body"
-        @click="onMarkdownClick"
-        v-html="renderedHtml"
-      />
+      <!-- 普通消息内容：图片、任务通知、文字可同时显示（非互斥） -->
+      <template v-else>
+        <!-- 图片 -->
+        <div
+          v-if="images.length"
+          class="flex flex-wrap gap-2"
+          :class="{ 'mb-3': messageText || taskNotification }"
+        >
+          <img
+            v-for="(img, i) in images"
+            :key="i"
+            :src="`data:${img.source.media_type};base64,${img.source.data}`"
+            class="max-w-sm rounded-md border border-default cursor-pointer transition-opacity hover:opacity-80"
+            alt="uploaded image"
+            @click="openPreview(`data:${img.source.media_type};base64,${img.source.data}`)"
+          >
+        </div>
 
-      <!-- 纯文本 -->
-      <div
-        v-else
-        class="body-text whitespace-pre-wrap break-words"
-      >
-        {{ messageText }}
-      </div>
+        <!-- 后台任务通知：样式化卡片展示任务状态和摘要 -->
+        <div
+          v-if="taskNotification"
+          class="flex items-start gap-3"
+        >
+          <!-- 状态图标 -->
+          <UIcon
+            :name="taskNotification.status === 'completed' ? 'i-lucide-circle-check' : taskNotification.status === 'failed' ? 'i-lucide-circle-x' : 'i-lucide-loader-2'"
+            class="size-4 mt-0.5 shrink-0"
+            :class="[
+              taskNotification.status === 'completed' ? 'text-green-500' : '',
+              taskNotification.status === 'failed' ? 'text-[var(--color-error-text)]' : '',
+              taskNotification.status !== 'completed' && taskNotification.status !== 'failed' ? 'text-[var(--color-warning-text)] animate-spin' : ''
+            ]"
+          />
+          <div class="flex-1 min-w-0">
+            <!-- 状态徽章 + 任务 ID -->
+            <div class="flex items-center gap-2 mb-1">
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                :class="[
+                  taskNotification.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : '',
+                  taskNotification.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : '',
+                  taskNotification.status !== 'completed' && taskNotification.status !== 'failed' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : ''
+                ]"
+              >
+                {{ taskNotification.status }}
+              </span>
+              <span class="text-xs font-mono text-[var(--text-secondary)]">
+                {{ taskNotification.taskId }}
+              </span>
+            </div>
+            <!-- 摘要 -->
+            <p
+              v-if="taskNotification.summary"
+              class="text-sm text-[var(--text-primary)]"
+            >
+              {{ taskNotification.summary }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Markdown 渲染（与 taskNotification 互斥，但与图片可共存） -->
+        <div
+          v-else-if="isMarkdown"
+          class="markdown-body"
+          @click="onMarkdownClick"
+          v-html="renderedHtml"
+        />
+
+        <!-- 纯文本（仅当有文本且非 Markdown、非 taskNotification 时） -->
+        <div
+          v-else-if="messageText"
+          class="body-text whitespace-pre-wrap break-words"
+        >
+          {{ messageText }}
+        </div>
+      </template>
     </div>
   </div>
 </template>
