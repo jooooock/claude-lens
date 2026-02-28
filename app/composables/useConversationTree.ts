@@ -1,6 +1,21 @@
-import type { JsonlRecord, UserRecord, AssistantRecord, SystemRecord, ToolUseContent } from '~/types/records'
-import type { ConversationTurn, ConversationFilters } from '~/types/api'
+/**
+ * useConversationTree — 将扁平 JSONL 记录组织为对话轮次（Turn）树
+ *
+ * 核心职责：
+ * 1. 按过滤条件筛选记录（系统事件、旁支链路等）
+ * 2. 建立 tool_use_id → UserRecord 的映射，用于配对工具调用与其返回结果
+ * 3. 遍历记录序列，以「用户消息」为边界切分为多个 ConversationTurn
+ * 4. 在每个 turn 中聚合 assistant 元数据（模型、token、耗时等）
+ *
+ * 数据流：
+ *   JSONL records → useConversationTree → ConversationTurn[] → ConversationView 组件
+ */
 
+import type { JsonlRecord, UserRecord, AssistantRecord, SystemRecord, ProgressRecord, ToolUseContent, TokenUsage } from '~/types/records'
+import { isTurnDuration } from '~/types/records'
+import type { ConversationTurn, ConversationFilters, AssistantMeta } from '~/types/api'
+
+/** 默认过滤配置：隐藏进度事件和旁支链路，显示系统事件和思考 */
 const defaultFilters: ConversationFilters = {
   showProgress: false,
   showSystemEvents: true,
@@ -8,6 +23,28 @@ const defaultFilters: ConversationFilters = {
   showThinking: true
 }
 
+/**
+ * 累加两个 TokenUsage 对象。
+ * 一个 turn 中可能有多个 assistant 记录（工具调用循环），需要合并它们的 token 用量。
+ * 仅累加四个核心数值字段，其他元数据字段取第一个对象的值。
+ */
+function mergeUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
+  return {
+    ...a,
+    input_tokens: a.input_tokens + b.input_tokens,
+    output_tokens: a.output_tokens + b.output_tokens,
+    cache_creation_input_tokens: a.cache_creation_input_tokens + b.cache_creation_input_tokens,
+    cache_read_input_tokens: a.cache_read_input_tokens + b.cache_read_input_tokens
+  }
+}
+
+/**
+ * 将扁平的 JSONL 记录数组转换为结构化的 ConversationTurn 数组。
+ *
+ * @param records - 从 API 获取的原始记录列表（响应式引用）
+ * @param filters - 过滤选项（响应式引用），控制哪些类型的记录参与构建
+ * @returns { turns } - 计算属性，返回 ConversationTurn 数组
+ */
 export function useConversationTree(
   records: Ref<JsonlRecord[]> | Readonly<Ref<JsonlRecord[]>>,
   filters: Ref<ConversationFilters> = ref(defaultFilters)
@@ -16,15 +53,17 @@ export function useConversationTree(
     const recs = records.value
     const f = filters.value
 
-    // 按类型过滤
+    // ====== 第一步：按类型过滤记录 ======
+    // 注意：progress 记录始终保留（不在此处过滤），由 ProgressSection 组件自行折叠控制
     const filtered = recs.filter((r) => {
-      if (r.type === 'progress' && !f.showProgress) return false
       if (r.type === 'system' && !f.showSystemEvents) return false
       if ('isSidechain' in r && r.isSidechain && !f.showSidechains) return false
       return true
     })
 
-    // 建立 tool_use_id -> user record（工具返回结果）的映射
+    // ====== 第二步：建立工具返回结果的映射 ======
+    // 遍历所有 user 记录，找出包含 tool_result 的记录，以 tool_use_id 为 key 建立映射。
+    // 后续处理 assistant 记录中的 tool_use 块时，可以通过 ID 查找对应的返回结果。
     const toolResultMap = new Map<string, UserRecord>()
     for (const r of filtered) {
       if (r.type !== 'user') continue
@@ -39,15 +78,30 @@ export function useConversationTree(
       }
     }
 
-    // 组织为 turn 序列
+    // ====== 第三步：创建 Turn 序列 ======
+
+    /** 创建空的 turn 对象，key 默认使用自增序号 */
+    let turnCounter = 0
+    function createTurn(key?: string): ConversationTurn {
+      return {
+        key: key || `auto-${turnCounter++}`,
+        assistantBlocks: [],
+        systemEvents: [],
+        progressEvents: []
+      }
+    }
+
     const result: ConversationTurn[] = []
     let currentTurn: ConversationTurn | null = null
-    let turnCounter = 0
 
+    // ====== 第四步：遍历记录，构建 Turn 树 ======
     for (const r of filtered) {
       if (r.type === 'user') {
         const ur = r as UserRecord
-        // 跳过 meta 消息和工具返回消息
+        // 跳过不应展示的用户消息：
+        // - isMeta: 系统注入的元数据
+        // - toolUseResult: 工具返回结果（已通过 toolResultMap 关联到工具调用）
+        // - 全部是 tool_result 的内容块：纯工具返回消息
         if (ur.isMeta) continue
         if (ur.toolUseResult !== undefined) continue
         if (Array.isArray(ur.message.content) && ur.message.content.every(b => b.type === 'tool_result')) continue
@@ -56,28 +110,46 @@ export function useConversationTree(
         if (currentTurn) {
           result.push(currentTurn)
         }
-        currentTurn = {
-          key: ur.uuid,
-          userMessage: ur,
-          assistantBlocks: [],
-          systemEvents: []
-        }
+        currentTurn = createTurn(ur.uuid)
+        currentTurn.userMessage = ur
       } else if (r.type === 'assistant') {
         const ar = r as AssistantRecord
         if (!currentTurn) {
-          currentTurn = { key: `auto-${turnCounter++}`, assistantBlocks: [], systemEvents: [] }
+          currentTurn = createTurn()
         }
 
+        // 填充 assistantMeta：
+        // - 第一条 assistant 记录：初始化元数据（模型、token、stop reason 等）
+        // - 后续 assistant 记录：累加 token 用量，更新 stop reason 为最新值
+        if (!currentTurn.assistantMeta) {
+          currentTurn.assistantMeta = {
+            model: ar.message.model,
+            usage: { ...ar.message.usage },
+            stopReason: ar.message.stop_reason,
+            stopSequence: ar.message.stop_sequence,
+            requestId: ar.requestId,
+            isApiErrorMessage: ar.isApiErrorMessage,
+            timestamp: ar.timestamp
+          }
+        } else {
+          currentTurn.assistantMeta.usage = mergeUsage(currentTurn.assistantMeta.usage, ar.message.usage)
+          currentTurn.assistantMeta.stopReason = ar.message.stop_reason
+        }
+
+        // 解析 assistant 消息中的内容块，按类型分发到 assistantBlocks
         for (const block of ar.message.content) {
           if (block.type === 'text') {
+            // 跳过空文本
             if (block.text.trim()) {
               currentTurn.assistantBlocks.push({ kind: 'text', text: block.text })
             }
           } else if (block.type === 'thinking') {
+            // 受 showThinking 过滤器控制
             if (f.showThinking) {
               currentTurn.assistantBlocks.push({ kind: 'thinking', thinking: block.thinking })
             }
           } else if (block.type === 'tool_use') {
+            // 工具调用：从 toolResultMap 中查找配对的返回结果
             const toolCall = block as ToolUseContent
             const toolResult = toolResultMap.get(toolCall.id)
             currentTurn.assistantBlocks.push({
@@ -90,12 +162,25 @@ export function useConversationTree(
       } else if (r.type === 'system') {
         const sr = r as SystemRecord
         if (!currentTurn) {
-          currentTurn = { key: `auto-${turnCounter++}`, assistantBlocks: [], systemEvents: [] }
+          currentTurn = createTurn()
         }
         currentTurn.systemEvents.push(sr)
+
+        // 特殊处理：将 turn_duration 记录的耗时关联到 assistantMeta
+        if (isTurnDuration(sr) && currentTurn.assistantMeta) {
+          currentTurn.assistantMeta.durationMs = sr.durationMs
+        }
+      } else if (r.type === 'progress') {
+        // 进度记录始终收集（不受 showProgress 过滤），显示控制交由 ConversationView
+        const pr = r as ProgressRecord
+        if (!currentTurn) {
+          currentTurn = createTurn()
+        }
+        currentTurn.progressEvents.push(pr)
       }
     }
 
+    // 别忘了推入最后一个 turn
     if (currentTurn) {
       result.push(currentTurn)
     }

@@ -1,3 +1,19 @@
+<!--
+  default - 应用默认布局
+
+  用途：
+    定义整个应用的 Dashboard 风格布局结构：
+    - 左侧：可折叠、可调整宽度的侧边栏（UDashboardSidebar），包含应用 Logo、
+      项目树组件（SidebarProjectTree）和底部的版本号 + 主题切换按钮
+    - 右侧：主内容面板（UDashboardPanel），通过 <slot/> 渲染子路由页面内容
+
+  布局参数：
+    - 侧边栏默认宽度 20%，可拖拽调整范围 15%~35%
+    - 侧边栏支持折叠（collapsible）
+
+  使用场景：
+    作为 Nuxt 的默认布局，包裹所有页面（index.vue 和 session/[project]/[sessionId].vue）。
+-->
 <script setup lang="ts">
 </script>
 

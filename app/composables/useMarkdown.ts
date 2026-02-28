@@ -1,3 +1,18 @@
+/**
+ * useMarkdown - Markdown 渲染和代码高亮工具函数集合
+ *
+ * 提供以下功能：
+ * 1. renderMarkdown(text)  — 将 Markdown 文本渲染为安全的 HTML（经 DOMPurify 消毒）
+ * 2. highlightJson(text)   — 使用 highlight.js 对 JSON 文本进行语法高亮
+ * 3. isJsonLike(text)      — 判断文本是否可能是 JSON 格式
+ * 4. hasMarkdown(text)     — 判断文本是否包含 Markdown 语法
+ *
+ * 技术实现：
+ * - 使用 highlight.js/lib/core（按需加载）而非完整包，减小 bundle 体积
+ * - 手动注册常用语言（json/js/ts/html/css/bash/python/yaml/markdown/diff）
+ * - 配置 marked 使用 GFM（GitHub Flavored Markdown）并启用换行符转换
+ * - 自定义 renderer 为代码块添加 highlight.js 语法高亮
+ */
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js/lib/core'
@@ -12,7 +27,7 @@ import yaml from 'highlight.js/lib/languages/yaml'
 import markdown from 'highlight.js/lib/languages/markdown'
 import diff from 'highlight.js/lib/languages/diff'
 
-// 注册常用语言
+// 注册常用语言（按需导入 + 注册，包括常见的别名如 js/ts/sh/py/yml/md）
 hljs.registerLanguage('json', json)
 hljs.registerLanguage('javascript', javascript)
 hljs.registerLanguage('js', javascript)
@@ -32,14 +47,15 @@ hljs.registerLanguage('markdown', markdown)
 hljs.registerLanguage('md', markdown)
 hljs.registerLanguage('diff', diff)
 
-// 配置 marked
+// 配置 marked：启用 GFM（表格、任务列表等）和 breaks（换行符转 <br>）
 marked.setOptions({
   gfm: true,
   breaks: true
 })
 
-// 自定义 renderer 为代码块添加高亮
+// 自定义 marked renderer：为围栏代码块（```）添加 highlight.js 语法高亮
 const renderer = new marked.Renderer()
+/** 围栏代码块渲染：如果指定了已注册语言则精确高亮，否则使用自动检测 */
 renderer.code = ({ text, lang }: { text: string, lang?: string }) => {
   const language = lang && hljs.getLanguage(lang) ? lang : ''
   const highlighted = language
@@ -48,6 +64,7 @@ renderer.code = ({ text, lang }: { text: string, lang?: string }) => {
   return `<pre class="code-block hljs"><code class="language-${language || 'auto'}">${highlighted}</code></pre>`
 }
 
+/** 行内代码渲染：添加 inline-code CSS 类 */
 renderer.codespan = ({ text }: { text: string }) => {
   return `<code class="inline-code">${text}</code>`
 }

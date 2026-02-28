@@ -55,6 +55,14 @@
   --color-warning-text: #b45309;
   --color-warning-bg: #f59e0b12;
   --color-warning-border: #f59e0b40;
+  --color-error: #ef4444;
+  --color-error-text: #dc2626;
+  --color-error-bg: #ef444412;
+  --color-error-border: #ef444440;
+  --color-info: #3b82f6;
+  --color-info-text: #2563eb;
+  --color-info-bg: #3b82f612;
+  --color-info-border: #3b82f640;
 
   /* 侧边栏颜色 */
   --sidebar-text: #1f2328;
@@ -104,6 +112,14 @@
   --color-warning-text: #fbbf24;
   --color-warning-bg: #fbbf2412;
   --color-warning-border: #fbbf2440;
+  --color-error: #f87171;
+  --color-error-text: #f87171;
+  --color-error-bg: #f8717112;
+  --color-error-border: #f8717140;
+  --color-info: #60a5fa;
+  --color-info-text: #60a5fa;
+  --color-info-bg: #60a5fa12;
+  --color-info-border: #60a5fa40;
 
   /* 侧边栏颜色（暗色） */
   --sidebar-text: #e6edf3;
@@ -195,6 +211,24 @@ body {
 }
 .card-thinking:hover {
   border-color: var(--color-thinking);
+}
+
+/* 卡片类型区分 — 错误 */
+.card-error {
+  border: 1.5px solid var(--color-error-border);
+  background-color: var(--color-error-bg);
+}
+.card-error:hover {
+  border-color: var(--color-error);
+}
+
+/* 卡片类型区分 — 信息 */
+.card-info {
+  border: 1.5px solid var(--color-info-border);
+  background-color: var(--color-info-bg);
+}
+.card-info:hover {
+  border-color: var(--color-info);
 }
 
 /* 代码块样式 */

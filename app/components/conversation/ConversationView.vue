@@ -1,9 +1,35 @@
+<!--
+  ConversationView - 对话视图主体组件
+
+  用途：
+    渲染整个对话的 Turn 序列。每个 Turn 按以下顺序渲染内容：
+    1. 系统事件（CompactBoundary / ApiError / StopHookSummary / LocalCommand）
+    2. 用户消息（右对齐，占 3/5 宽度）
+    3. Assistant 内容块（左对齐，按序渲染文本 / Thinking / 工具调用）
+    4. AssistantMetaBar（模型、Token、耗时等元数据）
+    5. 进度事件（折叠式，受 showProgress 开关控制）
+    底部有加载指示器。
+
+  Props：
+    - turns: ConversationTurn[]  — 对话轮次数组，由 useConversationTree composable 构建
+    - loading: boolean           — 是否正在加载数据，为 true 时在底部显示加载动画
+    - showProgress?: boolean     — 是否显示进度事件区域（可选，默认不显示）
+
+  使用场景：
+    嵌入在 session/[project]/[sessionId].vue 页面的滚动容器内，
+    是对话历史展示的核心组件。
+-->
 <script setup lang="ts">
 import type { ConversationTurn } from '~/types/api'
+import { isCompactBoundary, isStopHookSummary, isApiError, isLocalCommand, isTurnDuration } from '~/types/records'
 
+/** @property {ConversationTurn[]} turns - 对话轮次数组，每个 Turn 包含 userMessage、assistantBlocks、systemEvents、progressEvents 等 */
+/** @property {boolean} loading - 数据加载状态，控制底部 spinner 的显示 */
+/** @property {boolean} [showProgress] - 是否展示进度事件区域，由过滤器面板的 Progress 开关控制 */
 defineProps<{
   turns: ConversationTurn[]
   loading: boolean
+  showProgress?: boolean
 }>()
 </script>
 
@@ -15,12 +41,26 @@ defineProps<{
       :data-turn-index="i"
       class="space-y-3"
     >
-      <!-- 系统事件（如 compact_boundary） -->
-      <ConversationCompactBoundary
-        v-for="evt in turn.systemEvents"
-        :key="`sys-${evt.uuid}`"
-        :record="evt"
-      />
+      <!-- 系统事件（按子类型分发渲染） -->
+      <template v-for="evt in turn.systemEvents" :key="`sys-${evt.uuid}`">
+        <ConversationCompactBoundary
+          v-if="isCompactBoundary(evt)"
+          :record="evt"
+        />
+        <ConversationApiErrorBlock
+          v-else-if="isApiError(evt)"
+          :record="evt"
+        />
+        <ConversationStopHookSummaryBlock
+          v-else-if="isStopHookSummary(evt)"
+          :record="evt"
+        />
+        <ConversationLocalCommandBlock
+          v-else-if="isLocalCommand(evt)"
+          :record="evt"
+        />
+        <!-- turn_duration 不单独渲染，已集成到 AssistantMetaBar -->
+      </template>
 
       <!-- 用户消息（右对齐） -->
       <div
@@ -84,6 +124,20 @@ defineProps<{
             </div>
           </div>
         </template>
+
+        <!-- Assistant 元数据行 -->
+        <div v-if="turn.assistantMeta" class="flex justify-start">
+          <div class="w-3/5">
+            <ConversationAssistantMetaBar :meta="turn.assistantMeta" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 进度事件（折叠式，受 showProgress 开关控制） -->
+      <div v-if="showProgress && turn.progressEvents?.length" class="flex justify-start">
+        <div class="w-3/5">
+          <ConversationProgressSection :events="turn.progressEvents" />
+        </div>
       </div>
     </div>
 
